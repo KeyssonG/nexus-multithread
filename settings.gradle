@@ -1,0 +1,6 @@
+rootProject.name = 'nexus-multithread'
+
+include 'modules:empresa'
+include 'modules:estoque'
+include 'modules:nexus'
+include 'libs:common-security'

@@ -1,0 +1,17 @@
+# Local configuration
+**/application-local.properties
+**/application-dev.properties
+*.local
+
+# Gradle
+.gradle
+build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# System
+.DS_Store
+Thumbs.db

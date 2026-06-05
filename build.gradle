@@ -1,0 +1,140 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.4' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+}
+
+allprojects {
+    group = 'keysson.nexus'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.4"
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << '--enable-preview'
+    }
+
+    dependencies {
+        compileOnly 'org.projectlombok:lombok:1.18.38'
+        annotationProcessor 'org.projectlombok:lombok:1.18.38'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+}
+
+project(':libs:common-security') {
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    }
+}
+
+project(':modules:empresa') {
+    apply plugin: 'org.springframework.boot'
+
+    dependencies {
+        implementation project(':libs:common-security')
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.boot:spring-boot-starter-amqp'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
+        implementation 'org.postgresql:postgresql:42.7.7'
+        implementation 'io.github.resilience4j:resilience4j-spring-boot2:1.7.1'
+        implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+        implementation 'io.micrometer:micrometer-registry-prometheus'
+
+        // JWT (Temporário até migrar para common-security)
+        implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    }
+
+    bootJar {
+        enabled = false
+    }
+
+    jar {
+        enabled = true
+    }
+}
+
+project(':modules:estoque') {
+    apply plugin: 'org.springframework.boot'
+
+    dependencies {
+        implementation project(':libs:common-security')
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.boot:spring-boot-starter-amqp'
+        implementation 'org.springframework.boot:spring-boot-starter-validation'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'io.micrometer:micrometer-registry-prometheus'
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+        runtimeOnly 'org.postgresql:postgresql'
+
+        // JWT (Temporário até migrar para common-security)
+        implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    }
+
+    bootJar {
+        enabled = false
+    }
+
+    jar {
+        enabled = true
+    }
+}
+
+project(':modules:nexus') {
+    apply plugin: 'org.springframework.boot'
+
+    dependencies {
+        implementation project(':modules:empresa')
+        implementation project(':modules:estoque')
+        implementation project(':libs:common-security')
+        
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.boot:spring-boot-starter-amqp'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'io.micrometer:micrometer-registry-prometheus'
+        
+        runtimeOnly 'org.postgresql:postgresql'
+    }
+
+    bootJar {
+        archiveFileName = 'nexus.jar'
+    }
+}
