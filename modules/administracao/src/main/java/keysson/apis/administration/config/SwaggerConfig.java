@@ -1,17 +1,17 @@
-package keysson.apis.empresa.config;
+package keysson.apis.administration.config;
 
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration("empresaSwaggerConfig")
+@Configuration("administrationSwaggerConfig")
 public class SwaggerConfig {
 
     @Bean
-    public GroupedOpenApi empresaApi() {
+    public GroupedOpenApi administrationApi() {
         return GroupedOpenApi.builder()
-                .group("empresa")
-                .packagesToScan("keysson.apis.empresa.controller")
+                .group("administration")
+                .pathsToMatch("/administracao/**")
                 .build();
     }
 }

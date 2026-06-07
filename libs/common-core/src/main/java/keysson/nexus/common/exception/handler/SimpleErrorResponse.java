@@ -1,4 +1,4 @@
-package keysson.apis.empresa.exception.handler;
+package keysson.nexus.common.exception.handler;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

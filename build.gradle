@@ -44,13 +44,15 @@ subprojects {
     }
 }
 
-project(':libs:common-security') {
+project(':libs:common-core') {
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
         runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
         runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+        implementation 'org.springframework.boot:spring-boot-starter-amqp'
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
     }
 }
 
@@ -58,7 +60,7 @@ project(':modules:empresa') {
     apply plugin: 'org.springframework.boot'
 
     dependencies {
-        implementation project(':libs:common-security')
+        implementation project(':libs:common-core')
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -71,7 +73,7 @@ project(':modules:empresa') {
         implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
         implementation 'io.micrometer:micrometer-registry-prometheus'
 
-        // JWT (Temporário até migrar para common-security)
+        // JWT (Temporário até migrar para common-core)
         implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
         runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
         runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
@@ -90,7 +92,7 @@ project(':modules:estoque') {
     apply plugin: 'org.springframework.boot'
 
     dependencies {
-        implementation project(':libs:common-security')
+        implementation project(':libs:common-core')
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -101,7 +103,38 @@ project(':modules:estoque') {
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
         runtimeOnly 'org.postgresql:postgresql'
 
-        // JWT (Temporário até migrar para common-security)
+        // JWT (Temporário até migrar para common-core)
+        implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    }
+
+    bootJar {
+        enabled = false
+    }
+
+    jar {
+        enabled = true
+    }
+}
+
+project(':modules:administracao') {
+    apply plugin: 'org.springframework.boot'
+
+    dependencies {
+        implementation project(':libs:common-core')
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.boot:spring-boot-starter-amqp'
+        implementation 'org.springframework.boot:spring-boot-starter-validation'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'io.micrometer:micrometer-registry-prometheus'
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+        implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
+        runtimeOnly 'org.postgresql:postgresql'
+
+        // JWT (Temporário até migrar para common-core)
         implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
         runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
         runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
@@ -122,7 +155,8 @@ project(':modules:nexus') {
     dependencies {
         implementation project(':modules:empresa')
         implementation project(':modules:estoque')
-        implementation project(':libs:common-security')
+        implementation project(':modules:administracao')
+        implementation project(':libs:common-core')
         
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -130,6 +164,7 @@ project(':modules:nexus') {
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'io.micrometer:micrometer-registry-prometheus'
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
         
         runtimeOnly 'org.postgresql:postgresql'
     }

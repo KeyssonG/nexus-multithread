@@ -1,8 +1,9 @@
 package keysson.apis.empresa.exception.enums;
 
+import keysson.nexus.common.exception.IErrorCode;
 import org.springframework.http.HttpStatus;
 
-public enum ErrorCode {
+public enum ErrorCode implements IErrorCode {
 
     CNPJ_JA_CADASTRADO("Empresa com este CNPJ já está cadastrada.", HttpStatus.BAD_REQUEST),
     EMAIL_INVALIDO("O e-mail informado é inválido.", HttpStatus.BAD_REQUEST),

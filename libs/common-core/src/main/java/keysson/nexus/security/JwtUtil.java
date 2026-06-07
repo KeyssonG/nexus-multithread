@@ -25,7 +25,7 @@ public class JwtUtil {
     private final long EXPIRATION_TIME = MILLISECONDS.toMillis(86400000);
     private final Key key;
 
-    public JwtUtil(@Value("${jwt.secret}") String secretKey) {
+    public JwtUtil(@Value("${jwt.secret:${SECRET_KEY:defaultSecretKeyForDevelopmentOnlyDoNotUseInProduction}}") String secretKey) {
         this.secretKey = secretKey;
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
@@ -69,6 +69,10 @@ public class JwtUtil {
         return extractAllClaims(token).get("role", String.class);
     }
 
+    public Date extractExpiration(String token) {
+        return extractAllClaims(token).getExpiration();
+    }
+
     public boolean isTokenValid(String token) {
         try {
             Jwts.parserBuilder()
@@ -81,7 +85,7 @@ public class JwtUtil {
         } catch (MalformedJwtException e) {
             System.err.println("Token malformado: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Erro inesperado: " + e.getMessage());
+            System.err.println("Erro inesperado: " + e.getClass() + " - " + e.getMessage());
         }
         return false;
     }

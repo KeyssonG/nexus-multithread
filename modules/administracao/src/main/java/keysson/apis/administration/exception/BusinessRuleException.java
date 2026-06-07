@@ -1,6 +1,6 @@
-package keysson.apis.empresa.exception;
+package keysson.apis.administration.exception;
 
-import keysson.apis.empresa.exception.enums.ErrorCode;
+import keysson.apis.administration.exception.enums.ErrorCode;
 import keysson.nexus.common.exception.BaseBusinessException;
 
 public class BusinessRuleException extends BaseBusinessException {

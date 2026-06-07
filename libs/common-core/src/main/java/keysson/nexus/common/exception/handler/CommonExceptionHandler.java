@@ -1,7 +1,7 @@
-package keysson.apis.empresa.exception.handler;
+package keysson.nexus.common.exception.handler;
 
-import keysson.apis.empresa.exception.BusinessRuleException;
-import keysson.apis.empresa.exception.enums.ErrorCode;
+import keysson.nexus.common.exception.BaseBusinessException;
+import keysson.nexus.common.exception.IErrorCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class CommonExceptionHandler {
 
-    @ExceptionHandler(BusinessRuleException.class)
-    public ResponseEntity<SimpleErrorResponse> handleBusinessRuleException(BusinessRuleException ex) {
-        ErrorCode code = ex.getErrorCode();
+    @ExceptionHandler(BaseBusinessException.class)
+    public ResponseEntity<SimpleErrorResponse> handleBusinessRuleException(BaseBusinessException ex) {
+        IErrorCode code = ex.getErrorCode();
 
         return ResponseEntity
                 .status(code.getStatus())
