@@ -1,0 +1,155 @@
+package keysson.apis.validacao.service;
+
+import jakarta.servlet.http.HttpServletRequest;
+import keysson.nexus.security.JwtUtil;
+import keysson.apis.validacao.dto.FuncionarioCadastradoEvent;
+import keysson.apis.validacao.dto.request.RequestRegister;
+import keysson.apis.validacao.dto.request.RequestUpdateEmployee;
+import keysson.apis.validacao.dto.response.FuncionarioRegistroResultado;
+import keysson.apis.validacao.exception.BusinessRuleException;
+import keysson.apis.validacao.exception.enums.ErrorCode;
+import keysson.apis.validacao.repository.RegisterRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.Random;
+
+
+@Service("validacaoRegisterService")
+@Slf4j
+public class RegisterService {
+
+    private final RegisterRepository registerRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final RabbitService rabbitService;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private HttpServletRequest httpRequest;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    public RegisterService(RegisterRepository registerRepository, 
+                           BCryptPasswordEncoder passwordEncoder, 
+                           @Qualifier("validacaoRabbitService") RabbitService rabbitService) {
+        this.registerRepository = registerRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.rabbitService = rabbitService;
+    }
+
+    public void registerEmployee(RequestRegister requestRegister) throws BusinessRuleException {
+
+        String token = (String) httpRequest.getAttribute("CleanJwt");
+
+        Integer idEmpresa = jwtUtil.extractCompanyId(token);
+        if (idEmpresa == null) {
+            throw new IllegalArgumentException("ID da empresa não encontrado no token.");
+        }
+
+        if (registerRepository.existsByCpf(requestRegister.getCpf())) {
+            throw new BusinessRuleException(ErrorCode.CPF_JA_CADASTRADO);
+        }
+
+        if (registerRepository.existsByUsername(requestRegister.getUsername())) {
+            throw new BusinessRuleException(ErrorCode.USERNAME_JA_EXISTE);
+        }
+
+        if (registerRepository.existsByEmail(requestRegister.getEmail())) {
+            throw new BusinessRuleException(ErrorCode.EMAIL_JA_CADASTRADO);
+        }
+
+        int numeroMatricula = gerarNumeroMatricula();
+
+        String plainPassword = generateRandomPassword();
+        String encodedPassword = passwordEncoder.encode(plainPassword);
+
+        java.util.Date dataNascimento = requestRegister.getDataNascimento();
+        java.sql.Date sqlDate = new java.sql.Date(dataNascimento.getTime());
+
+        FuncionarioRegistroResultado resultado = registerRepository.save(
+                idEmpresa,
+                requestRegister.getNome(),
+                sqlDate,
+                requestRegister.getDepartamento(),
+                requestRegister.getTelefone(),
+                requestRegister.getEmail(),
+                requestRegister.getCpf(),
+                requestRegister.getEndereco(),
+                requestRegister.getSexo(),
+                requestRegister.getUsername(),
+                encodedPassword,
+                numeroMatricula
+        );
+
+        if (resultado.getResultCode() == 0) {
+            FuncionarioCadastradoEvent event = new FuncionarioCadastradoEvent(
+                    idEmpresa,
+                    requestRegister.getNome(),
+                    requestRegister.getEmail(),
+                    requestRegister.getCpf(),
+                    requestRegister.getUsername(),
+                    plainPassword
+            );
+            try {
+                rabbitTemplate.convertAndSend("funcionario-cliente.fila", event);
+
+                rabbitService.saveMessagesInBank(event, 1);
+            } catch (Exception ex) {
+                rabbitService.saveMessagesInBank(event, 0);
+                throw new RuntimeException("Erro ao enviar mensagem ao RabbitMQ: " + ex.getMessage());
+            }
+        } else if (resultado.getResultCode() == 1) {
+            throw new BusinessRuleException(ErrorCode.ERRO_CADASTRAR);
+        }
+    }
+
+    private int gerarNumeroMatricula() {
+        Random random = new Random();
+        int numero;
+
+        do {
+            numero = 100000 + random.nextInt(900000);
+        } while (registerRepository.existsByRegistration(numero));
+
+        return numero;
+    }
+
+    private String generateRandomPassword() {
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[12];
+        random.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
+    }
+
+    public void updateEmployeeData(RequestUpdateEmployee request) {
+        String token = (String) httpRequest.getAttribute("CleanJwt");
+        Integer idEmpresa = Optional.ofNullable(jwtUtil.extractCompanyId(token))
+                .orElseThrow(() -> new IllegalArgumentException("ID da empresa não encontrado no token."));
+
+        Integer userId = Optional.ofNullable(request.getId())
+                .map(Long::intValue)
+                .orElse(null);
+
+        log.info("Atualizando funcionário userId={}, companyId={}, nome={}, departamento={}, cpf={}, sexo={}",
+                userId, idEmpresa, request.getNome(), request.getDepartamento(), request.getCpf(), request.getSexo());
+
+        Integer result = registerRepository.updateEmployee(request, idEmpresa);
+
+        Optional.ofNullable(result)
+                .filter(r -> r == 0)
+                .ifPresentOrElse(
+                        r -> log.info("Funcionário atualizado com sucesso. userId={}", userId),
+                        () -> log.warn("Procedure de atualização retornou código inesperado: {} para userId={}", result, userId)
+                );
+    }
+}

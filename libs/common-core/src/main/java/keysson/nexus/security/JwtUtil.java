@@ -30,7 +30,7 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String generateToken(int id, int companyId, UUID consumerId) {
+    public String generateToken(int id, int companyId, UUID consumerId, List<String> modules) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + EXPIRATION_TIME);
 
@@ -38,10 +38,15 @@ public class JwtUtil {
                 .claim("id", id)
                 .claim("companyId", companyId)
                 .claim("consumerId", consumerId.toString())
+                .claim("modules", modules)
                 .setIssuedAt(now)
                 .setExpiration(expiration)
                 .signWith(key)
                 .compact();
+    }
+
+    public Date getExpirationDate() {
+        return new Date(System.currentTimeMillis() + EXPIRATION_TIME);
     }
 
     public Claims extractAllClaims(String token) {

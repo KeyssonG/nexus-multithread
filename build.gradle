@@ -149,6 +149,30 @@ project(':modules:administracao') {
     }
 }
 
+project(':modules:validacao') {
+    apply plugin: 'org.springframework.boot'
+
+    dependencies {
+        implementation project(':libs:common-core')
+        implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.boot:spring-boot-starter-amqp'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'io.micrometer:micrometer-registry-prometheus'
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+        runtimeOnly 'org.postgresql:postgresql'
+    }
+
+    bootJar {
+        enabled = false
+    }
+
+    jar {
+        enabled = true
+    }
+}
+
 project(':modules:nexus') {
     apply plugin: 'org.springframework.boot'
 
@@ -156,6 +180,7 @@ project(':modules:nexus') {
         implementation project(':modules:empresa')
         implementation project(':modules:estoque')
         implementation project(':modules:administracao')
+        implementation project(':modules:validacao')
         implementation project(':libs:common-core')
         
         implementation 'org.springframework.boot:spring-boot-starter-web'
