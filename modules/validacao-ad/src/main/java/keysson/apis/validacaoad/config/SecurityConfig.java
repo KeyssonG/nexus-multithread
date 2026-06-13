@@ -1,11 +1,9 @@
-package keysson.nexus.security;
+package keysson.apis.validacaoad.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,30 +17,30 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
-@Configuration("commonCoreSecurityConfig")
+@Configuration("validacaoADSecurityConfig")
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
-    @Qualifier("commonCoreJwtAuthenticationFilter")
+    @Qualifier("validacaoADJwtAuthenticationFilter")
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean("commonCorePasswordEncoder")
-    @Primary
+    @Bean("validacaoADPasswordEncoder")
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean("commonCoreSecurityFilterChain")
-    @Primary
+    @Bean("validacaoADSecurityFilterChain")
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher("/ad/**", "/login-multithread", "/cadastrar/funcionario-multithread", "/alterar/senha")
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login-multithread", "/login", "/reset-senha/**", "/ad/reset-senha/**", "/cadastrar/funcionario-cliente", "/cadastrar/funcionario-multithread", "/alterar/senha").permitAll()
-                        .requestMatchers("/actuator/prometheus", "/actuator/health").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers( "/login-multithread").permitAll()
+                        .requestMatchers( "/ad/reset-senha/**").permitAll()
+                        .requestMatchers( "/cadastrar/funcionario-multithread").permitAll()
+                        .requestMatchers("/actuator/prometheus").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -54,30 +52,33 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean("commonCoreCorsConfigurationSource")
-    @Primary
+    @Bean("validacaoADCorsConfigurationSource")
     public CorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-
+     
         config.setAllowedOriginPatterns(Arrays.asList(
-                "http://*",
-                "http://localhost:*",
-                "http://127.0.0.1:*"
+            "http://*",           
+            "http://localhost:*",
+            "http://127.0.0.1:*"   
         ));
-
+        
+        // Métodos HTTP permitidos
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-
+        
         config.setAllowedHeaders(Arrays.asList(
-                "Origin", "Content-Type", "Accept", "Authorization",
-                "X-Requested-With", "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
+            "Origin", "Content-Type", "Accept", "Authorization", 
+            "X-Requested-With", "Access-Control-Request-Method", 
+            "Access-Control-Request-Headers"
         ));
-
+        
+      
         config.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
         config.setAllowCredentials(true);
+        
         config.setMaxAge(3600L);
-
+        
         source.registerCorsConfiguration("/**", config);
         return source;
     }

@@ -7,22 +7,25 @@ import keysson.apis.validacao.mapper.PasswordResetTokenRowMapper;
 import keysson.apis.validacao.model.PasswordResetToken;
 import keysson.apis.validacao.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Repository
+@Repository("validacaoRepository")
 public class ValidacaoRepository {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
 
     @Autowired
+    @Qualifier("validacaoUserRowMapper")
     private UserRowMapper userRowMapper;
 
     @Autowired
+    @Qualifier("validacaoPasswordResetTokenRowMapper")
     private PasswordResetTokenRowMapper passwordResetTokenRowMapper;
 
 

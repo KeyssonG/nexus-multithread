@@ -1,10 +1,12 @@
-package keysson.nexus.security;
+package keysson.apis.validacaoad.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import keysson.apis.validacaoad.Utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,10 +16,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
-@Component("commonCoreJwtAuthenticationFilter")
+@Component("validacaoADJwtAuthenticationFilter")
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
+    @Qualifier("validacaoADJwtUtil")
     private JwtUtil jwtUtil;
 
     @Override
@@ -29,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
 
         if (token != null && jwtUtil.isTokenValid(token)) {
+
             request.setAttribute("CleanJwt", token);
 
             Authentication auth = new UsernamePasswordAuthenticationToken(

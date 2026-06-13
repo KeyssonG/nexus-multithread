@@ -1,15 +1,15 @@
-package keysson.apis.validacao.mapper;
+package keysson.apis.validacaoad.mapper;
 
-import keysson.apis.validacao.model.PasswordResetToken;
+import keysson.apis.validacaoad.model.PasswordResetToken;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-@Component("validacaoPasswordResetTokenRowMapper")
+@Component("validacaoADPasswordResetTokenRowMapper")
 public class PasswordResetTokenRowMapper implements RowMapper<PasswordResetToken> {
-
+    
     @Override
     public PasswordResetToken mapRow(ResultSet rs, int rowNum) throws SQLException {
         PasswordResetToken token = new PasswordResetToken();

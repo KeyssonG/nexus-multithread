@@ -1,6 +1,6 @@
-package keysson.apis.validacao.mapper;
+package keysson.apis.validacaoad.mapper;
 
-import keysson.apis.validacao.model.User;
+import keysson.apis.validacaoad.model.User;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
-@Component("validacaoUserRowMapper")
+@Component("validacaoADUserRowMapper")
 public class UserRowMapper implements RowMapper<User> {
 
     @Override
@@ -20,6 +20,7 @@ public class UserRowMapper implements RowMapper<User> {
         user.setPassword(rs.getString("password"));
         user.setStatus(rs.getInt("status"));
         user.setConsumerId(UUID.fromString(rs.getString("consumer_id")));
+        user.setInitialAccess(rs.getBoolean("primeiro_acesso"));
 
         return user;
     }

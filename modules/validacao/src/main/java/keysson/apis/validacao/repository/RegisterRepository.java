@@ -11,7 +11,7 @@ import java.sql.CallableStatement;
 import java.sql.Types;
 import java.util.*;
 
-@Repository
+@Repository("validacaoRegisterRepository")
 public class RegisterRepository {
 
     private final JdbcTemplate jdbcTemplate;

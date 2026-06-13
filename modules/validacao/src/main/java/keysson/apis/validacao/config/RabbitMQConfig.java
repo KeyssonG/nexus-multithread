@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration("validacaoRabbitMQConfig")
 public class RabbitMQConfig {
 
-    @Bean
+    @Bean("validacaoFuncionarioClienteQueue")
     public Queue funcionarioClienteQueue() {
         return QueueBuilder.durable("funcionario-cliente.fila").build();
     }

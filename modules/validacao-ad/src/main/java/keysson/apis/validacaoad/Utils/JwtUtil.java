@@ -1,4 +1,4 @@
-package keysson.nexus.security;
+package keysson.apis.validacaoad.Utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -12,26 +12,26 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-@Component
+@Component("validacaoADJwtUtil")
 @Getter
 public class JwtUtil {
 
-    private final String secretKey;
+    @Value("${SECRET_KEY}")
+    private String secretKey;
+
     private final long EXPIRATION_TIME = MILLISECONDS.toMillis(86400000);
     private final Key key;
 
-    public JwtUtil(@Value("${jwt.secret:${SECRET_KEY:defaultSecretKeyForDevelopmentOnlyDoNotUseInProduction}}") String secretKey) {
+    public JwtUtil(@Value("${SECRET_KEY}") String secretKey) {
         this.secretKey = secretKey;
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String generateToken(int id, int companyId, UUID consumerId, List<String> modules) {
+    public String generateToken(int id, int companyId, UUID consumerId) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + EXPIRATION_TIME);
 
@@ -39,13 +39,11 @@ public class JwtUtil {
                 .claim("id", id)
                 .claim("companyId", companyId)
                 .claim("consumerId", consumerId.toString())
-                .claim("modules", modules)
                 .setIssuedAt(now)
                 .setExpiration(expiration)
                 .signWith(key)
                 .compact();
     }
-
     public Date getExpirationDate() {
         return new Date(System.currentTimeMillis() + EXPIRATION_TIME);
     }
@@ -66,13 +64,9 @@ public class JwtUtil {
         return extractAllClaims(token).get("companyId", Integer.class);
     }
 
-    @SuppressWarnings("unchecked")
-    public List<Object> extractModules(String token) {
-        return (List<Object>) extractAllClaims(token).get("modules");
-    }
-
-    public String extractRole(String token) {
-        return extractAllClaims(token).get("role", String.class);
+    public UUID extractConsumerId(String token) {
+        String consumerIdStr = extractAllClaims(token).get("consumerId", String.class);
+        return UUID.fromString(consumerIdStr);
     }
 
     public Date extractExpiration(String token) {

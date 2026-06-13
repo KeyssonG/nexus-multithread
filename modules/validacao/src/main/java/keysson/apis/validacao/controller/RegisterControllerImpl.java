@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@RestController("validacaoRegisterController")
 @RequiredArgsConstructor
 @Slf4j
 public class RegisterControllerImpl implements RegisterController {
