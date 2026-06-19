@@ -41,7 +41,6 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/register", "/login-multithread", "/login", "/reset-senha/**", "/ad/reset-senha/**", "/cadastrar/funcionario-cliente", "/cadastrar/funcionario-multithread", "/alterar/senha").permitAll()
-                        .requestMatchers("/actuator/prometheus", "/actuator/health").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )

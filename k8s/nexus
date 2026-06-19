@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-deployment
+  labels:
+    app: nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus
+  template:
+    metadata:
+      labels:
+        app: nexus
+    spec:
+      containers:
+      - name: nexus
+        image: keyssong/nexus-multithread:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8085
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-service
+  labels:
+    app: nexus
+spec:
+  selector:
+    app: nexus
+  ports:
+    - protocol: TCP
+      port: 8085
+      targetPort: 8085
+  type: ClusterIP

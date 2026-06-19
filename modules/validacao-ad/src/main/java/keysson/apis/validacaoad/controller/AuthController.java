@@ -11,7 +11,7 @@ import keysson.apis.validacaoad.dto.request.RequestUpdatePassword;
 import keysson.apis.validacaoad.dto.response.LoginResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 
@@ -23,7 +23,7 @@ public interface AuthController {
     @Operation(
             summary = "Login do usuário",
             description = "Endpoint que autentica usuário através do username e password, e gera Token.",
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Dados de login do usuário.",
                     required = true,
                     content = @Content(schema = @Schema(implementation = LoginRequest.class))
@@ -36,7 +36,7 @@ public interface AuthController {
             summary = "Alterar senha",
             description = "Endpoint para alterar senha de acesso do usuário. " +
                     "Requer um token JWT válido no cabeçalho Authorization.",
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Nova senha do usuário.",
                     required = true,
                     content = @Content(schema = @Schema(implementation = RequestUpdatePassword.class))
@@ -49,7 +49,7 @@ public interface AuthController {
     @Operation(
             summary = "Solicitar reset de senha (AD)",
             description = "Endpoint para solicitar reset de senha no fluxo AD. Valida usuário e email na base de dados e envia token para fila do RabbitMQ.",
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Username e email do usuário para reset de senha.",
                     required = true,
                     content = @Content(schema = @Schema(implementation = RequestResetPassword.class))
@@ -61,7 +61,7 @@ public interface AuthController {
     @Operation(
             summary = "Confirmar reset de senha (AD)",
             description = "Endpoint para confirmar reset de senha no fluxo AD usando token recebido e definir nova senha.",
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Token e nova senha do usuário.",
                     required = true,
                     content = @Content(schema = @Schema(implementation = ConfirmResetPassword.class))

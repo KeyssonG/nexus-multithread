@@ -4,8 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
         IMAGE_TAG = "latest"
-        DEPLOYMENT_FILE_COMPANY = "k8s/company/empresa-deployment.yaml"
-        DEPLOYMENT_FILE_INVENTORY = "k8s/inventory/estoque-deployment.yaml"
+        DEPLOYMENT_FILE_NEXUS = "k8s/nexus"
     }
 
     triggers {
@@ -80,9 +79,7 @@ pipeline {
                         git config user.name "Jenkins"
                         git remote set-url origin https://$GIT_USER:$GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
 
-                        # Atualiza ambos os manifestos
-                        sed -i "s|image: .*|image: $DOCKERHUB_IMAGE:$IMAGE_TAG|" $DEPLOYMENT_FILE_COMPANY
-                        sed -i "s|image: .*|image: $DOCKERHUB_IMAGE:$IMAGE_TAG|" $DEPLOYMENT_FILE_INVENTORY
+                        sed -i "s|image: .*|image: $DOCKERHUB_IMAGE:$IMAGE_TAG|" $DEPLOYMENT_FILE_NEXUS
 
                         git add k8s/
 

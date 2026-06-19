@@ -65,13 +65,11 @@ project(':modules:empresa') {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
         implementation 'org.postgresql:postgresql:42.7.7'
         implementation 'io.github.resilience4j:resilience4j-spring-boot2:1.7.1'
         implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
-        implementation 'io.micrometer:micrometer-registry-prometheus'
 
         // JWT (Temporário até migrar para common-core)
         implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -98,8 +96,6 @@ project(':modules:estoque') {
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
         implementation 'org.springframework.boot:spring-boot-starter-validation'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'io.micrometer:micrometer-registry-prometheus'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
         runtimeOnly 'org.postgresql:postgresql'
 
@@ -128,8 +124,6 @@ project(':modules:administracao') {
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
         implementation 'org.springframework.boot:spring-boot-starter-validation'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'io.micrometer:micrometer-registry-prometheus'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
         implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
         runtimeOnly 'org.postgresql:postgresql'
@@ -158,8 +152,6 @@ project(':modules:validacao') {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'io.micrometer:micrometer-registry-prometheus'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
         runtimeOnly 'org.postgresql:postgresql'
 
@@ -187,8 +179,6 @@ project(':modules:validacao-ad') {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'io.micrometer:micrometer-registry-prometheus'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
         runtimeOnly 'org.postgresql:postgresql'
 
@@ -222,8 +212,6 @@ project(':modules:nexus') {
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'io.micrometer:micrometer-registry-prometheus'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
         
         runtimeOnly 'org.postgresql:postgresql'

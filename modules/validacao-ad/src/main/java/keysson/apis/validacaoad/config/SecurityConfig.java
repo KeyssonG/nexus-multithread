@@ -39,8 +39,6 @@ public class SecurityConfig {
                         .requestMatchers( "/login-multithread").permitAll()
                         .requestMatchers( "/ad/reset-senha/**").permitAll()
                         .requestMatchers( "/cadastrar/funcionario-multithread").permitAll()
-                        .requestMatchers("/actuator/prometheus").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
