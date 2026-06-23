@@ -3,8 +3,6 @@ pipeline {
 
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
-        IMAGE_TAG = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
-        BRANCH_ENV = "${BRANCH_NAME}"
     }
 
     triggers {
@@ -13,15 +11,17 @@ pipeline {
 
     options {
         disableConcurrentBuilds()
-        skipDefaultCheckout true
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timeout(time: 30, unit: 'MINUTES')
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout e Setup') {
             steps {
                 checkout scm
+                script {
+                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
+                }
             }
         }
 
@@ -49,10 +49,7 @@ pipeline {
                 }
                 stage('Scan Trivy') {
                     steps {
-                        sh '''
-                            docker run --rm -v "$WORKSPACE:/app" aquasec/trivy:latest fs /app \
-                              --severity HIGH,CRITICAL --exit-code 0 || true
-                        '''
+                        sh 'docker run --rm -v "$WORKSPACE:/app" aquasec/trivy:latest fs /app --severity HIGH,CRITICAL --exit-code 0 || true'
                     }
                 }
             }
@@ -110,10 +107,8 @@ pipeline {
                     sh '''
                         echo "$KUBECONFIG_CONTENT" > kubeconfig
                         export KUBECONFIG=kubeconfig
-                        kubectl set image deployment/nexus-deployment -n nexus \
-                          nexus=$DOCKERHUB_IMAGE:$IMAGE_TAG
-                        kubectl rollout status deployment/nexus-deployment -n nexus \
-                          --timeout=5m
+                        kubectl set image deployment/nexus-deployment -n nexus nexus=$DOCKERHUB_IMAGE:$IMAGE_TAG
+                        kubectl rollout status deployment/nexus-deployment -n nexus --timeout=5m
                     '''
                 }
             }
@@ -141,8 +136,7 @@ pipeline {
 
                         git config user.email "jenkins@pipeline.com"
                         git config user.name "Jenkins"
-                        git remote set-url origin \
-                          https://$GIT_USER:$GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
+                        git remote set-url origin https://$GIT_USER:$GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
 
                         if [ -f "$ENV_DIR/kustomization.yaml" ]; then
                             sed -i "s|newTag: .*|newTag: $IMAGE_TAG|" "$ENV_DIR/kustomization.yaml"
@@ -173,24 +167,17 @@ pipeline {
                 }
             }
             steps {
-                sh '''
-                    curl -X POST -H "Content-Type: application/json" \
-                      -d '{"text": "Pipeline *$JOB_NAME* concluida\\n\
-                        Imagem: $DOCKERHUB_IMAGE:$IMAGE_TAG\\n\
-                        Branch: $BRANCH_NAME"}' \
-                      "$SLACK_WEBHOOK_URL" || true
-                '''
+                sh 'curl -X POST -H "Content-Type: application/json" -d \'{"text": "Pipeline *$JOB_NAME* concluida\nImagem: $DOCKERHUB_IMAGE:$IMAGE_TAG\nBranch: $BRANCH_NAME"}\' "$SLACK_WEBHOOK_URL" || true'
             }
         }
     }
 
     post {
         always {
-            sh 'docker image prune -f || true'
-            sh 'rm -f kubeconfig || true'
+            cleanWs()
         }
         success {
-            echo "Pipeline concluida com sucesso! ($DOCKERHUB_IMAGE:$IMAGE_TAG)"
+            echo "Pipeline concluida com sucesso!"
         }
         failure {
             echo "Falha na pipeline. Verifique os logs."
