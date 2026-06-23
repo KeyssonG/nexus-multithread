@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,12 +36,18 @@ public class SecurityConfig {
     }
 
     @Bean("commonCoreSecurityFilterChain")
-    @Primary
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher(request -> {
+                    String path = request.getServletPath();
+                    return !path.startsWith("/ad/")
+                            && !path.equals("/login-multithread")
+                            && !path.equals("/cadastrar/funcionario-multithread")
+                            && !path.equals("/alterar/senha");
+                })
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login-multithread", "/login", "/reset-senha/**", "/ad/reset-senha/**", "/cadastrar/funcionario-cliente", "/cadastrar/funcionario-multithread", "/alterar/senha").permitAll()
+                        .requestMatchers("/register", "/login", "/reset-senha/**", "/ad/reset-senha/**", "/cadastrar/funcionario-cliente").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )
