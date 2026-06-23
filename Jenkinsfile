@@ -1,8 +1,9 @@
 pipeline {
-    agent any
+    agent { label 'docker' }
 
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
+        IMAGE_TAG = "latest"
     }
 
     triggers {
@@ -11,47 +12,12 @@ pipeline {
 
     options {
         disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 30, unit: 'MINUTES')
     }
 
     stages {
-        stage('Checkout e Setup') {
+        stage('Checkout') {
             steps {
                 checkout scm
-                script {
-                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
-                }
-            }
-        }
-
-        stage('Testes') {
-            parallel {
-                stage('Testes Unitários') {
-                    steps {
-                        sh './gradlew test --no-daemon'
-                    }
-                }
-                stage('Validação SonarQube') {
-                    steps {
-                        sh './gradlew sonarqube --no-daemon || echo "SonarQube nao configurado"'
-                    }
-                }
-            }
-        }
-
-        stage('Build') {
-            parallel {
-                stage('Build Gradle') {
-                    steps {
-                        sh './gradlew clean bootJar --no-daemon'
-                    }
-                }
-                stage('Scan Trivy') {
-                    steps {
-                        sh 'docker run --rm -v "$WORKSPACE:/app" aquasec/trivy:latest fs /app --severity HIGH,CRITICAL --exit-code 0 || true'
-                    }
-                }
             }
         }
 
@@ -65,13 +31,6 @@ pipeline {
         }
 
         stage('Push Docker Hub') {
-            when {
-                anyOf {
-                    branch 'dev'
-                    branch 'homol'
-                    branch 'master'
-                }
-            }
             steps {
                 withCredentials([
                     usernamePassword(
@@ -89,39 +48,7 @@ pipeline {
             }
         }
 
-        stage('Deploy K8s') {
-            when {
-                anyOf {
-                    branch 'dev'
-                    branch 'homol'
-                    branch 'master'
-                }
-            }
-            steps {
-                withCredentials([
-                    kubeconfigContent(
-                        credentialsId: 'k8s-kubeconfig',
-                        variable: 'KUBECONFIG_CONTENT'
-                    )
-                ]) {
-                    sh '''
-                        echo "$KUBECONFIG_CONTENT" > kubeconfig
-                        export KUBECONFIG=kubeconfig
-                        kubectl set image deployment/nexus-deployment -n nexus nexus=$DOCKERHUB_IMAGE:$IMAGE_TAG
-                        kubectl rollout status deployment/nexus-deployment -n nexus --timeout=5m
-                    '''
-                }
-            }
-        }
-
         stage('Atualizar Manifesto (GitOps)') {
-            when {
-                anyOf {
-                    branch 'dev'
-                    branch 'homol'
-                    branch 'master'
-                }
-            }
             steps {
                 withCredentials([
                     usernamePassword(
@@ -131,25 +58,19 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                        ENV_DIR="k8s/overlays/$BRANCH"
-
+                        git checkout master
                         git config user.email "jenkins@pipeline.com"
                         git config user.name "Jenkins"
                         git remote set-url origin https://$GIT_USER:$GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
 
-                        if [ -f "$ENV_DIR/kustomization.yaml" ]; then
-                            sed -i "s|newTag: .*|newTag: $IMAGE_TAG|" "$ENV_DIR/kustomization.yaml"
-                        else
-                            sed -i "s|image: .*|image: $DOCKERHUB_IMAGE:$IMAGE_TAG|" k8s/nexus
-                        fi
+                        sed -i "s|image: .*|image: $DOCKERHUB_IMAGE:$IMAGE_TAG|" k8s/nexus-deployment.yaml
 
                         git add k8s/
 
                         if ! git diff --cached --quiet; then
-                            git commit -m "Atualiza imagem para $IMAGE_TAG [skip ci]"
-                            git push origin $BRANCH
-                            echo "Manifesto atualizado em $BRANCH."
+                            git commit -m "Atualiza imagem Docker para $IMAGE_TAG"
+                            git push origin master
+                            echo "Manifesto atualizado."
                         else
                             echo "Nenhuma alteracao no manifesto."
                         fi
@@ -157,25 +78,9 @@ pipeline {
                 }
             }
         }
-
-        stage('Notificação') {
-            when {
-                anyOf {
-                    branch 'dev'
-                    branch 'homol'
-                    branch 'master'
-                }
-            }
-            steps {
-                sh 'curl -X POST -H "Content-Type: application/json" -d \'{"text": "Pipeline *$JOB_NAME* concluida\nImagem: $DOCKERHUB_IMAGE:$IMAGE_TAG\nBranch: $BRANCH_NAME"}\' "$SLACK_WEBHOOK_URL" || true'
-            }
-        }
     }
 
     post {
-        always {
-            cleanWs()
-        }
         success {
             echo "Pipeline concluida com sucesso!"
         }

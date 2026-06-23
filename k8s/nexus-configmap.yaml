@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: app-config
+  namespace: nexus
 data:
   SERVER_PORT: "8085"
   DB_HOST: postgres-service
@@ -9,4 +10,4 @@ data:
   DB_NAME: managerPROD
   HOST_RABBIT: rabbitmq-service
   PORT_RABBIT: "5672"
-  SPRING_PROFILES_ACTIVE: homol
+  SPRING_PROFILES_ACTIVE: prod
