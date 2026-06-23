@@ -12,7 +12,7 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableJpaRepositories(basePackages = {"keysson"})
 public class NexusApplication {
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
         SpringApplication.run(NexusApplication.class, args);
     }
 }
