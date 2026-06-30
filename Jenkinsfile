@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
-        IMAGE_TAG = "latest"
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     triggers {
