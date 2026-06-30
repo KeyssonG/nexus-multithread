@@ -26,6 +26,9 @@ spec:
             name: app-config
         - secretRef:
             name: app-secret
+        env:
+        - name: SERVER_PORT
+          value: "8085"
         resources:
           requests:
             memory: "512Mi"
