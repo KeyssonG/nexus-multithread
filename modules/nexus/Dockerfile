@@ -12,7 +12,7 @@ COPY modules/validacao modules/validacao
 COPY modules/validacao-ad modules/validacao-ad
 COPY modules/nexus modules/nexus
 
-RUN chmod +x gradlew && ./gradlew :modules:nexus:bootJar --no-daemon && \
+RUN chmod +x gradlew && sed -i 's/\r$//' gradlew && ./gradlew :modules:nexus:bootJar --no-daemon && \
     rm -rf ~/.gradle/caches/
 
 FROM eclipse-temurin:25-jre-alpine
