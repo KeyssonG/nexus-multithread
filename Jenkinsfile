@@ -34,8 +34,9 @@ pipeline {
 
         stage('Build da Imagem Docker') {
             steps {
-                sh '''
-                    docker build -t ${DOCKERHUB_IMAGE}:${IMAGE_TAG} -t ${DOCKERHUB_IMAGE}:latest -f modules/nexus/Dockerfile .
+                powershell script: '''
+                    $env:DOCKER_BUILDKIT = 1
+                    docker build -t "${env:DOCKERHUB_IMAGE}:${env:IMAGE_TAG}" -t "${env:DOCKERHUB_IMAGE}:latest" -f modules/nexus/Dockerfile .
                 '''
             }
         }
@@ -49,10 +50,10 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${DOCKERHUB_IMAGE}:${IMAGE_TAG}
-                        docker push ${DOCKERHUB_IMAGE}:latest
+                    powershell script: '''
+                        docker login -u "$env:DOCKER_USER" --password "$env:DOCKER_PASS"
+                        docker push "${env:DOCKERHUB_IMAGE}:${env:IMAGE_TAG}"
+                        docker push "${env:DOCKERHUB_IMAGE}:latest"
                     '''
                 }
             }
@@ -67,25 +68,25 @@ pipeline {
                         passwordVariable: 'GIT_TOKEN'
                     )
                 ]) {
-                    sh '''
+                    powershell script: '''
                         git checkout master
 
                         git config user.email "jenkins@pipeline.com"
                         git config user.name "Jenkins"
 
-                        git remote set-url origin https://$GIT_USER:$GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
+                        git remote set-url origin https://$env:GIT_USER:$env:GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
 
-                        sed -i "s|image: .*|image: ${DOCKERHUB_IMAGE}:${IMAGE_TAG}|" ${DEPLOYMENT_FILE}
+                        (Get-Content -Path $env:DEPLOYMENT_FILE) -replace 'image: .*', "image: $env:DOCKERHUB_IMAGE`:$env:IMAGE_TAG" | Set-Content -Path $env:DEPLOYMENT_FILE
 
-                        git add ${DEPLOYMENT_FILE}
+                        git add $env:DEPLOYMENT_FILE
 
-                        if ! git diff --cached --quiet; then
-                            git commit -m "Atualiza imagem Docker para ${IMAGE_TAG}"
+                        git diff --cached --quiet; if ($LASTEXITCODE -ne 0) {
+                            git commit -m "Atualiza imagem Docker para ${env:IMAGE_TAG}"
                             git push origin master
                             echo "Alterações detectadas e enviadas ao repositório."
-                        else
+                        } else {
                             echo "Nenhuma alteração detectada no deployment.yaml"
-                        fi
+                        }
                     '''
                 }
             }
