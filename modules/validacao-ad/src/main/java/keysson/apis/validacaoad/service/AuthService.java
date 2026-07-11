@@ -18,11 +18,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 @Service("validacaoADAuthService")
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final PasswordEncoder passwordEncoder;
 
@@ -53,12 +58,14 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) throws SQLException {
         User user = validacaoRepository.findByUsername(request.getUsername());
         if (user == null) {
+            log.warn("login_user_not_found | username={}", request.getUsername());
             throw new BusinessRuleException(ErrorCode.USER_NOT_FOUND);
         }
 
         Boolean checkPassword = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if (checkPassword == false) {
+            log.warn("login_bad_password | username={}", request.getUsername());
             throw new BusinessRuleException(ErrorCode.BAD_PASSWORD);
         }
 
@@ -83,10 +90,12 @@ public class AuthService {
 
         Integer userId = jwtUtil.extractUserId(token);
         if (userId == null) {
+            log.warn("update_password_user_not_found | reason=token_without_user_id");
             throw new IllegalArgumentException("ID do usuário não encontrado no token.");
         }
 
         if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
+            log.warn("update_password_weak | userId={}", userId);
             throw new IllegalArgumentException("A nova senha deve ter pelo menos 6 caracteres.");
         }
 
@@ -99,6 +108,7 @@ public class AuthService {
         // Busca o usuário pelo username e email na tabela contatos
         User user = validacaoRepository.findByUsernameAndEmail(email);
         if (user == null) {
+            log.warn("reset_user_not_found | email={}", email);
             throw new BusinessRuleException(ErrorCode.USER_NOT_FOUND);
         }
 
@@ -121,6 +131,7 @@ public class AuthService {
         // Busca o token válido
         PasswordResetToken resetToken = validacaoRepository.findValidResetToken(token);
         if (resetToken == null) {
+            log.warn("reset_token_invalid | token={}", token != null ? token.substring(0, Math.min(3, token.length())) + "***" : "null");
             throw new BusinessRuleException(ErrorCode.TOKEN_INVALIDO);
         }
 

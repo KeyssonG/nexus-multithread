@@ -6,6 +6,22 @@
         </encoder>
     </appender>
 
+    <!-- Suprime WARNs de HTTP method not supported (health checks, bots, etc) -->
+    <logger name="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver" level="ERROR"/>
+
+    <!-- Suprime logs verbosos do Spring Security em producao -->
+    <logger name="org.springframework.security" level="ERROR"/>
+
+    <!-- Suprime logs verbosos do Tomcat/WebSocket -->
+    <logger name="org.apache.tomcat" level="ERROR"/>
+    <logger name="org.apache.catalina" level="ERROR"/>
+
+    <!-- Logger do modulo validacao-ad: permite WARNs com contexto -->
+    <logger name="keysson.apis.validacaoad" level="INFO"/>
+
+    <!-- Logger do modulo empresa: permite INFOs do HttpLoggingFilter -->
+    <logger name="keysson.apis.empresa" level="INFO"/>
+
     <root level="WARN">
         <appender-ref ref="LOGSTASH"/>
     </root>
