@@ -71,12 +71,14 @@ pipeline {
                     )
                 ]) {
                     powershell script: '''
-                        git checkout master
-
                         git config user.email "jenkins@pipeline.com"
                         git config user.name "Jenkins"
 
                         git remote set-url origin https://$env:GIT_USER:$env:GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
+
+                        git fetch origin
+                        git checkout master
+                        git reset --hard origin/master
 
                         (Get-Content -Path $env:DEPLOYMENT_FILE) -replace 'image: .*', "image: $env:DOCKERHUB_IMAGE`:$env:IMAGE_TAG" | Set-Content -Path $env:DEPLOYMENT_FILE
 
