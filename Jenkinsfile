@@ -1,9 +1,10 @@
 pipeline {
-    agent { label 'docker' }
+    agent any
 
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_TAG = "build-${BUILD_NUMBER}"
+        DEPLOYMENT_FILE = "k8s/nexus-deployment.yaml"
     }
 
     triggers {
@@ -15,59 +16,75 @@ pipeline {
     }
 
     stages {
-        stage('Build Docker') {
+
+        stage('Verificar Branch') {
+            when {
+                branch 'master'
+            }
+            steps {
+                echo "Executando pipeline na branch master"
+            }
+        }
+
+        stage('Checkout do Código') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build da Imagem Docker') {
             steps {
                 sh '''
-                    apt-get update -qq && apt-get install -y -qq docker.io
-                    docker build -t $DOCKERHUB_IMAGE:$IMAGE_TAG -f modules/nexus/Dockerfile .
-                    docker tag $DOCKERHUB_IMAGE:$IMAGE_TAG $DOCKERHUB_IMAGE:latest
+                    docker build -t ${DOCKERHUB_IMAGE}:${IMAGE_TAG} -t ${DOCKERHUB_IMAGE}:latest -f modules/nexus/Dockerfile .
                 '''
             }
         }
 
-        stage('Push Docker Hub') {
+        stage('Push da Imagem para Docker Hub') {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: '9dc53a7e-e45d-4c90-90aa-e499be366396',
+                        credentialsId: 'DockerHub',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push $DOCKERHUB_IMAGE:$IMAGE_TAG
-                        docker push $DOCKERHUB_IMAGE:latest
+                        docker push ${DOCKERHUB_IMAGE}:${IMAGE_TAG}
+                        docker push ${DOCKERHUB_IMAGE}:latest
                     '''
                 }
             }
         }
 
-        stage('Atualizar Manifesto (GitOps)') {
+        stage('Atualizar deployment.yaml (GitOps)') {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'be0b606d-4fdf-492f-a432-d091286311f4',
+                        credentialsId: 'GitHub',
                         usernameVariable: 'GIT_USER',
                         passwordVariable: 'GIT_TOKEN'
                     )
                 ]) {
                     sh '''
                         git checkout master
+
                         git config user.email "jenkins@pipeline.com"
                         git config user.name "Jenkins"
+
                         git remote set-url origin https://$GIT_USER:$GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
 
-                        sed -i "s|image: .*|image: $DOCKERHUB_IMAGE:$IMAGE_TAG|" k8s/nexus-deployment.yaml
+                        sed -i "s|image: .*|image: ${DOCKERHUB_IMAGE}:${IMAGE_TAG}|" ${DEPLOYMENT_FILE}
 
-                        git add k8s/
+                        git add ${DEPLOYMENT_FILE}
 
                         if ! git diff --cached --quiet; then
-                            git commit -m "Atualiza imagem Docker para $IMAGE_TAG"
+                            git commit -m "Atualiza imagem Docker para ${IMAGE_TAG}"
                             git push origin master
-                            echo "Manifesto atualizado."
+                            echo "Alterações detectadas e enviadas ao repositório."
                         else
-                            echo "Nenhuma alteracao no manifesto."
+                            echo "Nenhuma alteração detectada no deployment.yaml"
                         fi
                     '''
                 }
@@ -77,10 +94,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline concluida com sucesso!"
+            echo "Pipeline concluída com sucesso! Imagem atualizada e GitOps acionado."
         }
         failure {
-            echo "Falha na pipeline. Verifique os logs."
+            echo "Erro na pipeline. Verifique os logs."
         }
     }
 }
