@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: nexus
-        image: keyssong/nexus-multithread:build-258
+        image: keyssong/nexus-multithread:build-259
         imagePullPolicy: Always
         ports:
         - containerPort: 8085
