@@ -3,6 +3,19 @@
     <appender name="LOGSTASH" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"app":"empresagi","environment":"producao"}</customFields>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <message>message</message>
+                <logger>logger_name</logger>
+                <thread>thread_name</thread>
+                <level>level</level>
+                <stackTrace>stack_trace</stackTrace>
+            </fieldNames>
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                <maxLength>2048</maxLength>
+                <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
         </encoder>
     </appender>
 
@@ -16,13 +29,31 @@
     <logger name="org.apache.tomcat" level="ERROR"/>
     <logger name="org.apache.catalina" level="ERROR"/>
 
-    <!-- Logger do modulo validacao-ad: permite WARNs com contexto -->
+    <!-- Modulo validacao-ad -->
     <logger name="keysson.apis.validacaoad" level="INFO"/>
 
-    <!-- Logger do modulo empresa: permite INFOs do HttpLoggingFilter -->
+    <!-- Modulo empresa -->
     <logger name="keysson.apis.empresa" level="INFO"/>
 
-    <root level="WARN">
+    <!-- Modulo estoque: WARN em producao, INFO em desenvolvimento -->
+    <logger name="keysson.apis.estoque" level="WARN"/>
+
+    <!-- HikariCP: loga tentativas de conexao em WARN -->
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+
+    <!-- Hibernate/SQL: suprime verboso, mantem erros -->
+    <logger name="org.hibernate" level="ERROR"/>
+    <logger name="org.hibernate.engine.jdbc.spi.SqlExceptionHelper" level="WARN"/>
+    <logger name="org.hibernate.event.internal" level="ERROR"/>
+
+    <!-- PostgreSQL driver -->
+    <logger name="org.postgresql" level="WARN"/>
+
+    <!-- Spring Boot startup: permite INFOs importantes -->
+    <logger name="org.springframework.boot" level="INFO"/>
+    <logger name="org.springframework.context" level="INFO"/>
+
+    <root level="INFO">
         <appender-ref ref="LOGSTASH"/>
     </root>
 </configuration>
