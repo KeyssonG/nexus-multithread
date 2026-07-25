@@ -85,7 +85,7 @@ pipeline {
                         git add $env:DEPLOYMENT_FILE
 
                         git diff --cached --quiet; if ($LASTEXITCODE -ne 0) {
-                            git commit -m "Atualiza imagem Docker para ${env:IMAGE_TAG}"
+                            git commit -m "Atualiza imagem Docker para ${env:IMAGE_TAG} [skip ci]"
                             git push origin master
                             echo "Alterações detectadas e enviadas ao repositório."
                         } else {
