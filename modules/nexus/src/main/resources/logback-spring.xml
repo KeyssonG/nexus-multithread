@@ -36,6 +36,9 @@
     <!-- LOGGERS COMUNS (todos os perfis)             -->
     <!-- ============================================ -->
 
+    <!-- Suprime logs internos do proprio logback na inicializacao -->
+    <logger name="ch.qos.logback" level="WARN"/>
+
     <!-- Suprime WARNs de HTTP method not supported (health checks, bots, etc) -->
     <logger name="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver" level="ERROR"/>
 

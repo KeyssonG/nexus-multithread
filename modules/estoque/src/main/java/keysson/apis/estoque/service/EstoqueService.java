@@ -9,6 +9,7 @@ import keysson.nexus.security.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -55,6 +56,7 @@ public class EstoqueService {
         return centro;
     }
 
+    @Transactional
     public Long cadastrarCentro(CadastrarCentroRequest request) throws BusinessRuleException {
         log.info("Cadastrando centro de armazenamento: {}", request.nome());
         try {
@@ -65,6 +67,7 @@ public class EstoqueService {
         }
     }
 
+    @Transactional
     public void atualizarCentro(Long id, CadastrarCentroRequest request) throws BusinessRuleException {
         log.info("Atualizando centro de armazenamento ID: {}", id);
         CentroArmazenamentoResponse centro = estoqueRepository.buscarCentroPorId(id);
@@ -79,6 +82,7 @@ public class EstoqueService {
         }
     }
 
+    @Transactional
     public void desativarCentro(Long id) throws BusinessRuleException {
         log.info("Desativando centro de armazenamento ID: {}", id);
         CentroArmazenamentoResponse centro = estoqueRepository.buscarCentroPorId(id);
@@ -102,6 +106,7 @@ public class EstoqueService {
         return estoqueRepository.listarLocalizacoesPorCentro(idCentro);
     }
 
+    @Transactional
     public Long cadastrarLocalizacao(Long idCentro, CadastrarLocalizacaoRequest request) throws BusinessRuleException {
         log.info("Cadastrando localização '{}' no centro ID: {}", request.codigo(), idCentro);
         try {
@@ -121,6 +126,7 @@ public class EstoqueService {
         return estoqueRepository.listarLocalizacoesProduto(idProduto);
     }
 
+    @Transactional
     public void vincularProdutoLocalizacao(VincularProdutoLocalizacaoRequest request) throws BusinessRuleException {
         log.info("Vinculando produto {} à localização {}", request.idProduto(), request.idLocalizacao());
         try {
@@ -149,6 +155,7 @@ public class EstoqueService {
         return produto;
     }
 
+    @Transactional
     public Long cadastrarProduto(CadastrarProdutoRequest request) throws BusinessRuleException {
         log.info("Cadastrando produto: {}", request.nome());
         try {
@@ -159,6 +166,7 @@ public class EstoqueService {
         }
     }
 
+    @Transactional
     public void atualizarProduto(Long id, AtualizarProdutoRequest request) throws BusinessRuleException {
         log.info("Atualizando produto ID: {}", id);
         try {
@@ -169,6 +177,7 @@ public class EstoqueService {
         }
     }
 
+    @Transactional
     public void desativarProduto(Long id) throws BusinessRuleException {
         log.info("Desativando produto ID: {}", id);
         ProdutoResponse produto = estoqueRepository.buscarProdutoPorId(id);
@@ -196,6 +205,7 @@ public class EstoqueService {
     // MOVIMENTAÇÕES DE ESTOQUE
     // ============================================
 
+    @Transactional
     public Long registrarEntrada(RegistrarEntradaRequest request) throws BusinessRuleException {
         log.info("Registrando entrada de estoque: produto={}, quantidade={}", request.idProduto(), request.quantidade());
         try {
@@ -209,6 +219,7 @@ public class EstoqueService {
         }
     }
 
+    @Transactional
     public void registrarSaida(RegistrarSaidaRequest request) throws BusinessRuleException {
         log.info("Registrando saída de estoque: produto={}, quantidade={}", request.idProduto(), request.quantidade());
         try {
@@ -245,6 +256,7 @@ public class EstoqueService {
     // INVENTÁRIO
     // ============================================
 
+    @Transactional
     public Long cadastrarInventario(Long idProduto) throws BusinessRuleException {
         log.info("Iniciando inventário para produto ID: {}", idProduto);
         try {
@@ -256,6 +268,7 @@ public class EstoqueService {
         }
     }
 
+    @Transactional
     public void registrarContagem(Long idInventario, RegistrarContagemRequest request) throws BusinessRuleException {
         log.info("Registrando contagem física no inventário ID: {}", idInventario);
         try {
@@ -271,6 +284,7 @@ public class EstoqueService {
         return estoqueRepository.listarDivergencias();
     }
 
+    @Transactional
     public void ajustarInventario(Long idInventario) throws BusinessRuleException {
         log.info("Aplicando ajuste no inventário ID: {}", idInventario);
         try {
