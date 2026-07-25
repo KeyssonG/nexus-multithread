@@ -142,6 +142,33 @@ public class EstoqueControllerImpl implements EstoqueController {
         return ResponseEntity.ok(estoqueService.listarCategorias());
     }
 
+    @Override
+    public ResponseEntity<CategoriaResponse> buscarCategoria(Long id) throws BusinessRuleException {
+        log.info("Recebendo requisição para buscar categoria ID: {}", id);
+        return ResponseEntity.ok(estoqueService.buscarCategoria(id));
+    }
+
+    @Override
+    public ResponseEntity<Long> cadastrarCategoria(CadastrarCategoriaRequest request) throws BusinessRuleException {
+        log.info("Recebendo requisição para cadastrar categoria: {}", request.nome());
+        Long id = estoqueService.cadastrarCategoria(request);
+        return ResponseEntity.ok(id);
+    }
+
+    @Override
+    public ResponseEntity<Void> atualizarCategoria(Long id, CadastrarCategoriaRequest request) throws BusinessRuleException {
+        log.info("Recebendo requisição para atualizar categoria ID: {}", id);
+        estoqueService.atualizarCategoria(id, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> desativarCategoria(Long id) throws BusinessRuleException {
+        log.info("Recebendo requisição para desativar categoria ID: {}", id);
+        estoqueService.desativarCategoria(id);
+        return ResponseEntity.ok().build();
+    }
+
     // ============================================
     // ESTOQUE (MOVIMENTAÇÕES)
     // ============================================

@@ -201,6 +201,56 @@ public class EstoqueService {
         return estoqueRepository.listarCategorias();
     }
 
+    public CategoriaResponse buscarCategoria(Long id) throws BusinessRuleException {
+        log.info("Buscando categoria ID: {}", id);
+        CategoriaResponse categoria = estoqueRepository.buscarCategoriaPorId(id);
+        if (categoria == null) {
+            throw new BusinessRuleException(ERROR_BUSCAR_CATEGORIA);
+        }
+        return categoria;
+    }
+
+    @Transactional
+    public Long cadastrarCategoria(CadastrarCategoriaRequest request) throws BusinessRuleException {
+        log.info("Cadastrando categoria: {}", request.nome());
+        try {
+            return estoqueRepository.cadastrarCategoria(request);
+        } catch (Exception e) {
+            log.error("Erro ao cadastrar categoria: {}", e.getMessage());
+            throw new BusinessRuleException(ERROR_CADASTRAR_CATEGORIA);
+        }
+    }
+
+    @Transactional
+    public void atualizarCategoria(Long id, CadastrarCategoriaRequest request) throws BusinessRuleException {
+        log.info("Atualizando categoria ID: {}", id);
+        CategoriaResponse categoria = estoqueRepository.buscarCategoriaPorId(id);
+        if (categoria == null) {
+            throw new BusinessRuleException(ERROR_BUSCAR_CATEGORIA);
+        }
+        try {
+            estoqueRepository.atualizarCategoria(id, request);
+        } catch (Exception e) {
+            log.error("Erro ao atualizar categoria ID {}: {}", id, e.getMessage());
+            throw new BusinessRuleException(ERROR_ATUALIZAR_CATEGORIA);
+        }
+    }
+
+    @Transactional
+    public void desativarCategoria(Long id) throws BusinessRuleException {
+        log.info("Desativando categoria ID: {}", id);
+        CategoriaResponse categoria = estoqueRepository.buscarCategoriaPorId(id);
+        if (categoria == null) {
+            throw new BusinessRuleException(ERROR_BUSCAR_CATEGORIA);
+        }
+        try {
+            estoqueRepository.desativarCategoria(id);
+        } catch (Exception e) {
+            log.error("Erro ao desativar categoria ID {}: {}", id, e.getMessage());
+            throw new BusinessRuleException(ERROR_DESATIVAR_CATEGORIA);
+        }
+    }
+
     // ============================================
     // MOVIMENTAÇÕES DE ESTOQUE
     // ============================================

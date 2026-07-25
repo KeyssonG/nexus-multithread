@@ -16,7 +16,9 @@ public class CategoriaRowMapper implements RowMapper<CategoriaResponse> {
                 rs.getLong("id_categoria"),
                 rs.getString("nome"),
                 rs.getString("descricao"),
-                rs.getTimestamp("criado_em") != null ? rs.getTimestamp("criado_em").toLocalDateTime() : null
+                rs.getString("status"),
+                rs.getTimestamp("criado_em") != null ? rs.getTimestamp("criado_em").toLocalDateTime() : null,
+                rs.getTimestamp("atualizado_em") != null ? rs.getTimestamp("atualizado_em").toLocalDateTime() : null
         );
     }
 }

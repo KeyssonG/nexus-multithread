@@ -17,6 +17,8 @@ public enum ErrorCode implements IErrorCode {
     ERROR_DESATIVAR_PRODUTO("Erro ao desativar produto", HttpStatus.BAD_REQUEST),
     ERROR_CADASTRAR_CATEGORIA("Erro ao cadastrar categoria", HttpStatus.BAD_REQUEST),
     ERROR_BUSCAR_CATEGORIA("Categoria não encontrada", HttpStatus.NOT_FOUND),
+    ERROR_ATUALIZAR_CATEGORIA("Erro ao atualizar categoria", HttpStatus.BAD_REQUEST),
+    ERROR_DESATIVAR_CATEGORIA("Erro ao desativar categoria", HttpStatus.BAD_REQUEST),
     ERROR_REGISTRAR_ENTRADA("Erro ao registrar entrada de estoque", HttpStatus.BAD_REQUEST),
     ERROR_REGISTRAR_SAIDA("Erro ao registrar saída de estoque", HttpStatus.BAD_REQUEST),
     ERROR_ESTOQUE_INSUFICIENTE("Estoque insuficiente para esta operação", HttpStatus.BAD_REQUEST),

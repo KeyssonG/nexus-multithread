@@ -93,8 +93,24 @@ public interface EstoqueController {
     // ============================================
 
     @GetMapping("/categorias")
-    @Operation(summary = "Listar categorias", description = "Lista todas as categorias de produtos")
+    @Operation(summary = "Listar categorias", description = "Lista todas as categorias ativas")
     ResponseEntity<List<CategoriaResponse>> listarCategorias() throws BusinessRuleException;
+
+    @GetMapping("/categorias/{id}")
+    @Operation(summary = "Buscar categoria por ID", description = "Retorna uma categoria pelo ID")
+    ResponseEntity<CategoriaResponse> buscarCategoria(@PathVariable Long id) throws BusinessRuleException;
+
+    @PostMapping("/categorias")
+    @Operation(summary = "Cadastrar categoria", description = "Cadastra uma nova categoria de produto")
+    ResponseEntity<Long> cadastrarCategoria(@RequestBody CadastrarCategoriaRequest request) throws BusinessRuleException;
+
+    @PutMapping("/categorias/{id}")
+    @Operation(summary = "Atualizar categoria", description = "Atualiza os dados de uma categoria")
+    ResponseEntity<Void> atualizarCategoria(@PathVariable Long id, @RequestBody CadastrarCategoriaRequest request) throws BusinessRuleException;
+
+    @DeleteMapping("/categorias/{id}")
+    @Operation(summary = "Desativar categoria", description = "Desativa uma categoria (soft delete)")
+    ResponseEntity<Void> desativarCategoria(@PathVariable Long id) throws BusinessRuleException;
 
     // ============================================
     // ESTOQUE (MOVIMENTAÇÕES)

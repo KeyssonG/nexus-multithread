@@ -302,13 +302,63 @@ public class EstoqueRepository {
     // ============================================
 
     private static final String SQL_LISTAR_CATEGORIAS = """
-            SELECT id_categoria, nome, descricao, criado_em
+            SELECT id_categoria, nome, descricao, status, criado_em, atualizado_em
             FROM tb_categoria
+            WHERE status = 'ATIVO'
             ORDER BY nome
+            """;
+
+    private static final String SQL_BUSCAR_CATEGORIA_POR_ID = """
+            SELECT id_categoria, nome, descricao, status, criado_em, atualizado_em
+            FROM tb_categoria
+            WHERE id_categoria = ?
+            """;
+
+    private static final String SQL_CADASTRAR_CATEGORIA = """
+            INSERT INTO tb_categoria (nome, descricao, status)
+            VALUES (?, ?, ?)
+            """;
+
+    private static final String SQL_ATUALIZAR_CATEGORIA = """
+            UPDATE tb_categoria
+            SET nome = ?, descricao = ?, status = ?
+            WHERE id_categoria = ?
+            """;
+
+    private static final String SQL_DESATIVAR_CATEGORIA = """
+            UPDATE tb_categoria SET status = 'INATIVO' WHERE id_categoria = ?
             """;
 
     public List<CategoriaResponse> listarCategorias() {
         return jdbcTemplate.query(SQL_LISTAR_CATEGORIAS, categoriaMapper);
+    }
+
+    public CategoriaResponse buscarCategoriaPorId(Long id) {
+        List<CategoriaResponse> resultados = jdbcTemplate.query(
+                SQL_BUSCAR_CATEGORIA_POR_ID, new Object[]{id}, categoriaMapper);
+        return resultados.isEmpty() ? null : resultados.getFirst();
+    }
+
+    public Long cadastrarCategoria(CadastrarCategoriaRequest request) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(SQL_CADASTRAR_CATEGORIA, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, request.nome());
+            ps.setString(2, request.descricao());
+            ps.setString(3, request.status() != null ? request.status() : "ATIVO");
+            return ps;
+        }, keyHolder);
+        return ((Number) keyHolder.getKeyList().getFirst().get("id_categoria")).longValue();
+    }
+
+    public void atualizarCategoria(Long id, CadastrarCategoriaRequest request) {
+        jdbcTemplate.update(SQL_ATUALIZAR_CATEGORIA,
+                request.nome(), request.descricao(),
+                request.status() != null ? request.status() : "ATIVO", id);
+    }
+
+    public void desativarCategoria(Long id) {
+        jdbcTemplate.update(SQL_DESATIVAR_CATEGORIA, id);
     }
 
     // ============================================
