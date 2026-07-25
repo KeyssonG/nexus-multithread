@@ -109,7 +109,7 @@ public class EstoqueRepository {
             ps.setString(9, request.status() != null ? request.status() : "ATIVO");
             return ps;
         }, keyHolder);
-        return Objects.requireNonNull(keyHolder.getKey()).longValue();
+        return Objects.requireNonNull(keyHolder.getKeyList().getFirst().get("id_centro")).toString().longValue();
     }
 
     public void atualizarCentro(Long id, CadastrarCentroRequest request) {
@@ -162,7 +162,7 @@ public class EstoqueRepository {
             ps.setString(8, request.status() != null ? request.status() : "ATIVA");
             return ps;
         }, keyHolder);
-        return Objects.requireNonNull(keyHolder.getKey()).longValue();
+        return Objects.requireNonNull(keyHolder.getKeyList().getFirst().get("id_localizacao")).toString().longValue();
     }
 
     // ============================================
@@ -271,7 +271,7 @@ public class EstoqueRepository {
             ps.setString(11, request.status() != null ? request.status() : "ATIVO");
             return ps;
         }, keyHolder);
-        return Objects.requireNonNull(keyHolder.getKey()).longValue();
+        return Objects.requireNonNull(keyHolder.getKeyList().getFirst().get("id_produto")).toString().longValue();
     }
 
     public void atualizarProduto(Long id, AtualizarProdutoRequest request) {
@@ -412,7 +412,7 @@ public class EstoqueRepository {
 
         jdbcTemplate.update(SQL_ATUALIZAR_ESTOQUE_ENTRADA, request.quantidade(), request.idProduto());
 
-        return Objects.requireNonNull(keyHolder.getKey()).longValue();
+        return Objects.requireNonNull(keyHolder.getKeyList().getFirst().get("id_movimentacao")).toString().longValue();
     }
 
     public void registrarSaida(RegistrarSaidaRequest request, Long idUsuario) {
@@ -508,7 +508,7 @@ public class EstoqueRepository {
             ps.setLong(5, idUsuario);
             return ps;
         }, keyHolder);
-        return Objects.requireNonNull(keyHolder.getKey()).longValue();
+        return Objects.requireNonNull(keyHolder.getKeyList().getFirst().get("id_inventario")).toString().longValue();
     }
 
     public void registrarContagem(Long idInventario, Integer qtdFisica, String observacao) {
