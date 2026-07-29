@@ -27,6 +27,18 @@ pipeline {
             }
         }
 
+        stage('Verificar Commit do Jenkins') {
+            steps {
+                powershell script: '''
+                    $lastAuthor = git log -1 --format="%an"
+                    if ($lastAuthor -eq "Jenkins") {
+                        Write-Output "Commit do Jenkins detectado ([skip ci]). Pipeline abortada para evitar loop."
+                        exit 0
+                    }
+                '''
+            }
+        }
+
         stage('Checkout do Código') {
             steps {
                 checkout scm
