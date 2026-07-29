@@ -63,6 +63,13 @@ pipeline {
         stage('Deploy no Kubernetes') {
             steps {
                 powershell script: '''
+                    if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
+                        Write-Output "Instalando kubectl..."
+                        $tmp = "$env:TEMP\\kubectl"
+                        if (-not (Test-Path $tmp)) { New-Item -ItemType Directory -Path $tmp -Force }
+                        Invoke-WebRequest -Uri "https://dl.k8s.io/release/v1.31.0/bin/windows/amd64/kubectl.exe" -OutFile "$tmp\\kubectl.exe"
+                        $env:Path += ";$tmp"
+                    }
                     kubectl set image deployment/nexus-deployment -n producao nexus=$env:DOCKERHUB_IMAGE:$env:IMAGE_TAG --record
                     kubectl rollout restart deployment/nexus-deployment -n producao
                 '''
