@@ -256,7 +256,11 @@ public class EstoqueRepository {
             PreparedStatement ps = connection.prepareStatement(SQL_CADASTRAR_PRODUTO, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, request.nome());
             ps.setString(2, request.descricao());
-            ps.setLong(3, request.idCategoria());
+            if (request.idCategoria() != null) {
+                ps.setLong(3, request.idCategoria());
+            } else {
+                ps.setNull(3, Types.BIGINT);
+            }
             if (request.idFornecedor() != null) {
                 ps.setLong(4, request.idFornecedor());
             } else {

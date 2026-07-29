@@ -1,8 +1,11 @@
 package keysson.apis.estoque.dto.request;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record CadastrarCentroRequest(
         @NotBlank(message = "Nome é obrigatório")
         @Size(max = 120, message = "Nome deve ter no máximo 120 caracteres")
