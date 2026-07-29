@@ -4,12 +4,10 @@ pipeline {
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
         IMAGE_TAG = "build-${BUILD_NUMBER}"
-        DEPLOYMENT_FILE = "k8s/nexus-deployment.yaml"
-        DOCKER_PATH = "C:\\Users\\keyss\\AppData\\Local\\Programs\\Rancher Desktop\\resources\\resources\\win32\\bin"
     }
 
     triggers {
-        pollSCM('* * * * *')
+        pollSCM('H/5 * * * *')
     }
 
     options {
@@ -61,38 +59,12 @@ pipeline {
             }
         }
 
-        stage('Atualizar deployment.yaml (GitOps)') {
+        stage('Deploy no Kubernetes') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'GitHub',
-                        usernameVariable: 'GIT_USER',
-                        passwordVariable: 'GIT_TOKEN'
-                    )
-                ]) {
-                    powershell script: '''
-                        git config user.email "jenkins@pipeline.com"
-                        git config user.name "Jenkins"
-
-                        git remote set-url origin https://$env:GIT_USER:$env:GIT_TOKEN@github.com/KeyssonG/nexus-multithread.git
-
-                        git fetch origin
-                        git checkout master
-                        git reset --hard origin/master
-
-                        (Get-Content -Path $env:DEPLOYMENT_FILE) -replace 'image: .*', "image: $env:DOCKERHUB_IMAGE`:$env:IMAGE_TAG" | Set-Content -Path $env:DEPLOYMENT_FILE
-
-                        git add $env:DEPLOYMENT_FILE
-
-                        git diff --cached --quiet; if ($LASTEXITCODE -ne 0) {
-                            git commit -m "Atualiza imagem Docker para ${env:IMAGE_TAG} [skip ci]"
-                            git push origin master
-                            echo "Alterações detectadas e enviadas ao repositório."
-                        } else {
-                            echo "Nenhuma alteração detectada no deployment.yaml"
-                        }
-                    '''
-                }
+                powershell script: '''
+                    kubectl set image deployment/nexus-deployment nexus-container=$env:DOCKERHUB_IMAGE:$env:IMAGE_TAG --record
+                    kubectl rollout restart deployment/nexus-deployment
+                '''
             }
         }
     }
