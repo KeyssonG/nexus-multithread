@@ -4,7 +4,6 @@ pipeline {
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
         IMAGE_TAG = "build-${BUILD_NUMBER}"
-        DEPLOYMENT_FILE = "k8s/nexus-deployment.yaml"
         DOCKER_PATH = "C:\\Users\\keyss\\AppData\\Local\\Programs\\Rancher Desktop\\resources\\resources\\win32\\bin"
     }
 
@@ -24,18 +23,6 @@ pipeline {
             }
             steps {
                 echo "Executando pipeline na branch master"
-            }
-        }
-
-        stage('Verificar Commit do Jenkins') {
-            steps {
-                powershell script: '''
-                    $lastAuthor = git log -1 --format="%an"
-                    if ($lastAuthor -eq "Jenkins") {
-                        Write-Output "Commit do Jenkins detectado ([skip ci]). Pipeline abortada para evitar loop."
-                        exit 0
-                    }
-                '''
             }
         }
 
@@ -73,43 +60,17 @@ pipeline {
             }
         }
 
-        stage('GitOps - Atualizar deployment.yaml') {
+        stage('Deploy') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'GitHub',
-                        usernameVariable: 'GIT_USER',
-                        passwordVariable: 'GIT_TOKEN'
-                    )
-                ]) {
-                    powershell script: '''
-                        $repoUrl = (git remote get-url origin) -replace 'https://', "https://$env:GIT_USER`:$env:GIT_TOKEN@"
-                        git remote set-url origin $repoUrl
-
-                        git fetch origin
-                        git checkout master
-                        git reset --hard origin/master
-
-                        (Get-Content -Path $env:DEPLOYMENT_FILE) -replace 'image: .*', "image: $env:DOCKERHUB_IMAGE`:$env:IMAGE_TAG" | Set-Content -Path $env:DEPLOYMENT_FILE
-
-                        git add $env:DEPLOYMENT_FILE
-
-                        git diff --cached --quiet; if ($LASTEXITCODE -ne 0) {
-                            git -c user.name=Jenkins -c user.email=jenkins@pipeline.com commit -m "Atualiza imagem Docker para ${env:IMAGE_TAG} [skip ci]"
-                            git push origin master
-                            echo "Deployment.yaml atualizado via GitOps."
-                        } else {
-                            echo "Nenhuma alteração no deployment.yaml"
-                        }
-                    '''
-                }
+                echo "Imagem $env:DOCKERHUB_IMAGE:$env:IMAGE_TAG publicada."
+                echo "ArgoCD Image Updater detectará a nova tag automaticamente."
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline concluída com sucesso! Imagem $env:DOCKERHUB_IMAGE:$env:IMAGE_TAG publicada e GitOps atualizado."
+            echo "Pipeline concluída com sucesso! Imagem $env:DOCKERHUB_IMAGE:$env:IMAGE_TAG publicada."
         }
         failure {
             echo "Erro na pipeline. Verifique os logs."
