@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
         IMAGE_TAG = "build-${BUILD_NUMBER}"
+        DOCKER_PATH = "C:\\Users\\keyss\\AppData\\Local\\Programs\\Rancher Desktop\\resources\\resources\\win32\\bin"
     }
 
     triggers {
@@ -62,8 +63,8 @@ pipeline {
         stage('Deploy no Kubernetes') {
             steps {
                 powershell script: '''
-                    kubectl set image deployment/nexus-deployment nexus-container=$env:DOCKERHUB_IMAGE:$env:IMAGE_TAG --record
-                    kubectl rollout restart deployment/nexus-deployment
+                    kubectl set image deployment/nexus-deployment -n producao nexus=$env:DOCKERHUB_IMAGE:$env:IMAGE_TAG --record
+                    kubectl rollout restart deployment/nexus-deployment -n producao
                 '''
             }
         }
