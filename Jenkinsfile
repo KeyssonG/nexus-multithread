@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
         IMAGE_TAG = "build-${BUILD_NUMBER}"
+        DEPLOYMENT_FILE = "k8s/nexus-deployment.yaml"
         DOCKER_PATH = "C:\\Users\\keyss\\AppData\\Local\\Programs\\Rancher Desktop\\resources\\resources\\win32\\bin"
     }
 
@@ -60,19 +61,36 @@ pipeline {
             }
         }
 
-        stage('Deploy no Kubernetes') {
+        stage('Atualizar deployment.yaml (GitOps)') {
             steps {
-                powershell script: '''
-                    if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
-                        Write-Output "Instalando kubectl..."
-                        $tmp = "$env:TEMP\\kubectl"
-                        if (-not (Test-Path $tmp)) { New-Item -ItemType Directory -Path $tmp -Force }
-                        Invoke-WebRequest -Uri "https://dl.k8s.io/release/v1.31.0/bin/windows/amd64/kubectl.exe" -OutFile "$tmp\\kubectl.exe"
-                        $env:Path += ";$tmp"
-                    }
-                    kubectl set image deployment/nexus-deployment -n producao nexus=$env:DOCKERHUB_IMAGE:$env:IMAGE_TAG --record
-                    kubectl rollout restart deployment/nexus-deployment -n producao
-                '''
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'GitHub',
+                        usernameVariable: 'GIT_USER',
+                        passwordVariable: 'GIT_TOKEN'
+                    )
+                ]) {
+                    powershell script: '''
+                        $repoUrl = (git remote get-url origin) -replace 'https://', "https://$env:GIT_USER`:$env:GIT_TOKEN@"
+                        git remote set-url origin $repoUrl
+
+                        git fetch origin
+                        git checkout master
+                        git reset --hard origin/master
+
+                        (Get-Content -Path $env:DEPLOYMENT_FILE) -replace 'image: .*', "image: $env:DOCKERHUB_IMAGE`:$env:IMAGE_TAG" | Set-Content -Path $env:DEPLOYMENT_FILE
+
+                        git add $env:DEPLOYMENT_FILE
+
+                        git diff --cached --quiet; if ($LASTEXITCODE -ne 0) {
+                            git -c user.name=Jenkins -c user.email=jenkins@pipeline.com commit -m "Atualiza imagem Docker para ${env:IMAGE_TAG} [skip ci]"
+                            git push origin master
+                            echo "Deployment atualizado via GitOps."
+                        } else {
+                            echo "Nenhuma alteração no deployment.yaml"
+                        }
+                    '''
+                }
             }
         }
     }
