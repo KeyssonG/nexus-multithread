@@ -4,12 +4,14 @@ pipeline {
     environment {
         DOCKERHUB_IMAGE = "keyssong/nexus-multithread"
         IMAGE_TAG = "build-${BUILD_NUMBER}"
-        DEPLOYMENT_FILE = "k8s/nexus-deployment.yaml"
+        GITOPS_REPO = "KeyssonG/k8s-gitops"
+        GITOPS_BRANCH = "main"
+        DEPLOYMENT_FILE = "nexus/nexus-deployment.yaml"
         DOCKER_PATH = "C:\\Users\\keyss\\AppData\\Local\\Programs\\Rancher Desktop\\resources\\resources\\win32\\bin"
     }
 
     triggers {
-        pollSCM('H/5 * * * *')
+        pollSCM('H/1 * * * *')
     }
 
     options {
@@ -71,24 +73,26 @@ pipeline {
                     )
                 ]) {
                     powershell script: '''
-                        $repoUrl = (git remote get-url origin) -replace 'https://', "https://$env:GIT_USER`:$env:GIT_TOKEN@"
-                        git remote set-url origin $repoUrl
+                        $gitopsUrl = "https://$env:GIT_USER`:$env:GIT_TOKEN@github.com/$env:GITOPS_REPO.git"
+                        $gitopsDir = "$env:WORKSPACE\\k8s-gitops"
 
-                        git fetch origin
-                        git checkout master
-                        git reset --hard origin/master
+                        if (Test-Path $gitopsDir) { Remove-Item -Recurse -Force $gitopsDir }
+                        git clone --quiet $gitopsUrl $gitopsDir
 
-                        (Get-Content -Path $env:DEPLOYMENT_FILE) -replace 'image: .*', "image: $env:DOCKERHUB_IMAGE`:$env:IMAGE_TAG" | Set-Content -Path $env:DEPLOYMENT_FILE
+                        $manifest = "$gitopsDir\\$env:DEPLOYMENT_FILE"
+                        (Get-Content -Path $manifest) -replace 'image: .*', "image: $env:DOCKERHUB_IMAGE`:$env:IMAGE_TAG" | Set-Content -Path $manifest
 
-                        git add $env:DEPLOYMENT_FILE
+                        git -C $gitopsDir add $env:DEPLOYMENT_FILE
 
-                        git diff --cached --quiet; if ($LASTEXITCODE -ne 0) {
-                            git -c user.name=Jenkins -c user.email=jenkins@pipeline.com commit -m "Atualiza imagem Docker para ${env:IMAGE_TAG} [skip ci]"
-                            git push origin master
-                            echo "Deployment.yaml atualizado via GitOps."
+                        git -C $gitopsDir diff --cached --quiet; if ($LASTEXITCODE -ne 0) {
+                            git -C $gitopsDir -c user.name=Jenkins -c user.email=jenkins@pipeline.com commit -m "nexus: atualiza imagem Docker para ${env:IMAGE_TAG}"
+                            git -C $gitopsDir push origin $env:GITOPS_BRANCH
+                            echo "Deployment.yaml atualizado via GitOps (repo $env:GITOPS_REPO)."
                         } else {
                             echo "Nenhuma alteração no deployment.yaml"
                         }
+
+                        git -C $gitopsDir remote set-url origin "https://github.com/$env:GITOPS_REPO.git"
                     '''
                 }
             }
