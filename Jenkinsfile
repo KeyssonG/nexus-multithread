@@ -7,7 +7,7 @@ pipeline {
         GITOPS_REPO = "KeyssonG/k8s-gitops"
         GITOPS_BRANCH = "main"
         DEPLOYMENT_FILE = "nexus/nexus-deployment.yaml"
-        DOCKER_PATH = "C:\\Users\\keyss\\AppData\\Local\\Programs\\Rancher Desktop\\resources\\resources\\win32\\bin"
+        DOCKER_PATH = "${env.DOCKER_PATH}"
     }
 
     triggers {
