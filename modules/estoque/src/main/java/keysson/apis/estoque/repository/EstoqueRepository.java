@@ -526,7 +526,7 @@ public class EstoqueRepository {
                    i.observacao, i.criado_em
             FROM tb_inventario i
             JOIN tb_produto p ON i.id_produto = p.id_produto
-            WHERE i.status = 'PENDENTE'
+            WHERE i.status IN ('PENDENTE', 'FINALIZADO')
             ORDER BY i.criado_em DESC
             """;
 
@@ -569,8 +569,8 @@ public class EstoqueRepository {
         InventarioResponse inv = buscarInventarioPorId(idInventario);
         if (inv == null) return;
 
-        int divergencia = qtdFisica - inv.qtdSistema();
-        String sql = "UPDATE tb_inventario SET qtd_fisica = ?, divergencia = ?, observacao = ? WHERE id_inventario = ?";
+        int divergencia = Math.abs(qtdFisica - inv.qtdSistema());
+        String sql = "UPDATE tb_inventario SET qtd_fisica = ?, divergencia = ?, observacao = ?, status = 'FINALIZADO' WHERE id_inventario = ?";
         jdbcTemplate.update(sql, qtdFisica, divergencia, observacao, idInventario);
     }
 
