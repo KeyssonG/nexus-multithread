@@ -161,7 +161,7 @@ public class EstoqueRepository {
             } else {
                 ps.setNull(8, Types.INTEGER);
             }
-            ps.setString(9, request.status() != null ? request.status() : "ATIVA");
+            ps.setString(9, request.status() != null ? request.status() : "ATIVO");
             return ps;
         }, keyHolder);
         return ((Number) keyHolder.getKeyList().getFirst().get("id_localizacao")).longValue();
