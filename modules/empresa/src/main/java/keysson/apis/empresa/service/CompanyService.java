@@ -66,6 +66,7 @@ public class CompanyService {
         rabbitService.saveMessagesInBank(event, 0);
     }
 
+    @Transactional
     public CompanyResponse registerCompany(RequestRegisterCompany requestRegisterCompany) throws BusinessRuleException, SQLException {
         logger.info("Iniciando registro de empresa com CNPJ: {}", requestRegisterCompany.getCnpj());
 

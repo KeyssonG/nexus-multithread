@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -47,6 +48,7 @@ public class RegisterService {
         this.rabbitService = rabbitService;
     }
 
+    @Transactional
     public void registerEmployee(RequestRegister requestRegister) throws BusinessRuleException {
 
         String token = (String) httpRequest.getAttribute("CleanJwt");
@@ -131,6 +133,7 @@ public class RegisterService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
     }
 
+    @Transactional
     public void updateEmployeeData(RequestUpdateEmployee request) {
         String token = (String) httpRequest.getAttribute("CleanJwt");
         Integer idEmpresa = Optional.ofNullable(jwtUtil.extractCompanyId(token))

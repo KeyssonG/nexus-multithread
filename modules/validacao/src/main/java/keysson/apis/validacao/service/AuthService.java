@@ -41,6 +41,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional
     public LoginResponse login(LoginRequest request) {
         User user = validacaoRepository.findByUsername(request.getUsername(), request.getIdEmpresa());
         int statuCompany = validacaoRepository.findStatusCompany(request.getIdEmpresa());

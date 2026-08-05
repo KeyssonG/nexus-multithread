@@ -6,6 +6,7 @@ import keysson.apis.validacaoad.dto.response.FuncionarioRegistroResultado;
 import keysson.apis.validacaoad.exception.BusinessRuleException;
 import keysson.apis.validacaoad.exception.enums.ErrorCode;
 import keysson.apis.validacaoad.repository.RegisterRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,6 +38,7 @@ public class RegisterService {
         this.rabbitTemplate = rabbitTemplate;
     }
 
+    @Transactional
     public void registerEmployee (RequestRegister requestRegister) throws BusinessRuleException, SQLException {
 
         if (registerRepository.existsByCpf(requestRegister.getCpf())) {

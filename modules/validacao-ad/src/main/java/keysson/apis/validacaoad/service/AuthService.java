@@ -84,6 +84,7 @@ public class AuthService {
     }
 
 
+    @Transactional
     public void updatePasswordUser(RequestUpdatePassword request) throws SQLException {
 
         String token = (String) httpRequest.getAttribute("CleanJwt");

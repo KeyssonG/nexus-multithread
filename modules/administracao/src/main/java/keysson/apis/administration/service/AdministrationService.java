@@ -21,6 +21,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -56,6 +57,7 @@ public class AdministrationService {
         return ResponseEntity.ok(empresasStatusPendente);
     };
 
+    @Transactional
     public void changeStatus(int newStatus, int conta) throws BusinessRuleException {
         log.info("Alterando status da conta: {} para: {}", conta, newStatus);
         try {
@@ -80,6 +82,7 @@ public class AdministrationService {
         return administrationRepository.findStatusCompany();
     }
 
+    @Transactional
     public void registerDepartment(CreateDepartmentRequest requestBody) throws BusinessRuleException {
         String token =(String)httpRequest.getAttribute("CleanJwt");
         Integer idEmpresa = jwtUtil.extractCompanyId(token);
@@ -121,6 +124,7 @@ public class AdministrationService {
         }
     }
 
+    @Transactional
     public void deleteDepartment(DeleteDepartmentRequest request) throws BusinessRuleException {
         log.info("Deletando departamento ID: {}", request.getIdDepartamento());
         try {
@@ -146,6 +150,7 @@ public class AdministrationService {
         return administrationRepository.findCompaniesByStatus(statusId);
     }
 
+    @Transactional
     public void linkCompanyModulo(LinkCompanyModuloRequest requestBody) throws BusinessRuleException {
         log.info("Vinculando empresa: {} ao módulo: {} com status: {}", 
                 requestBody.getCompanyId(), requestBody.getModuloId(), requestBody.getStatus());
@@ -158,6 +163,7 @@ public class AdministrationService {
         }
     }
 
+    @Transactional
     public void unlinkCompanyModulo(UnlinkCompanyModuloRequest requestBody) throws BusinessRuleException {
         log.info("Desvinculando empresa: {} do módulo: {}", requestBody.getCompanyId(), requestBody.getModuloId());
         try {
@@ -187,6 +193,7 @@ public class AdministrationService {
         return administrationRepository.getModulosByCompanyId(idEmpresa);
     }
 
+    @Transactional
     public void linkUserModulo(LinkUserModuloRequest requestBody) throws BusinessRuleException {
         String token = (String) httpRequest.getAttribute("CleanJwt");
         Integer idEmpresa = jwtUtil.extractCompanyId(token);
@@ -207,6 +214,7 @@ public class AdministrationService {
         }
     }
 
+    @Transactional
     public void unlinkUserModulo(UnlinkUserModuloRequest requestBody) throws BusinessRuleException {
         String token = (String) httpRequest.getAttribute("CleanJwt");
         Integer idEmpresa = jwtUtil.extractCompanyId(token);
@@ -270,6 +278,7 @@ public class AdministrationService {
         }
     }
 
+    @Transactional
     public void linkUserModuloPortal(PortalLinkUserModuloRequest requestBody) throws BusinessRuleException {
         log.info("Portal: Vinculando usuário: {} ao módulo: {} na empresa ID: {}", 
                 requestBody.getUserId(), requestBody.getModuloId(), requestBody.getCompanyId());
@@ -282,6 +291,7 @@ public class AdministrationService {
         }
     }
 
+    @Transactional
     public void unlinkUserModuloPortal(PortalUnlinkUserModuloRequest requestBody) throws BusinessRuleException {
         log.info("Portal: Desvinculando usuário: {} do módulo: {} na empresa ID: {}", 
                 requestBody.getUserId(), requestBody.getModuloId(), requestBody.getCompanyId());
