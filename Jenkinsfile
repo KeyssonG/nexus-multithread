@@ -56,8 +56,13 @@ pipeline {
                     powershell script: '''
                         $env:Path = "$env:DOCKER_PATH;$env:Path"
                         docker login -u "$env:DOCKER_USER" --password "$env:DOCKER_PASS"
+                        if ($LASTEXITCODE -ne 0) { throw "Falha no docker login" }
+
                         docker push "${env:DOCKERHUB_IMAGE}:${env:IMAGE_TAG}"
+                        if ($LASTEXITCODE -ne 0) { throw "Falha no push da imagem ${env:DOCKERHUB_IMAGE}:${env:IMAGE_TAG}" }
+
                         docker push "${env:DOCKERHUB_IMAGE}:latest"
+                        if ($LASTEXITCODE -ne 0) { throw "Falha no push da imagem ${env:DOCKERHUB_IMAGE}:latest" }
                     '''
                 }
             }
