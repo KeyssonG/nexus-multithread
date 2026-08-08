@@ -22,7 +22,11 @@ public class LocalizacaoRowMapper implements RowMapper<LocalizacaoResponse> {
                 rs.getString("nivel"),
                 rs.getObject("capacidade_max") != null ? rs.getInt("capacidade_max") : null,
                 rs.getString("status"),
-                rs.getTimestamp("criado_em") != null ? rs.getTimestamp("criado_em").toLocalDateTime() : null
+                rs.getTimestamp("criado_em") != null ? rs.getTimestamp("criado_em").toLocalDateTime() : null,
+                rs.getObject("id_produto_localizacao") != null ? rs.getLong("id_produto_localizacao") : null,
+                rs.getObject("id_produto") != null ? rs.getLong("id_produto") : null,
+                rs.getString("produto_nome"),
+                rs.getObject("quantidade") != null ? rs.getInt("quantidade") : null
         );
     }
 }

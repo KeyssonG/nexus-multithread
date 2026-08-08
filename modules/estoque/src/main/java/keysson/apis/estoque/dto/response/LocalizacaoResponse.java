@@ -16,6 +16,10 @@ public record LocalizacaoResponse(
         String nivel,
         Integer capacidadeMax,
         String status,
-        LocalDateTime criadoEm
+        LocalDateTime criadoEm,
+        Long idProdutoLocalizacao,
+        Long idProduto,
+        String produtoNome,
+        Integer quantidade
 ) {
 }

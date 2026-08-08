@@ -52,6 +52,10 @@ public interface EstoqueController {
     @Operation(summary = "Cadastrar localização", description = "Cadastra uma nova localização em um centro")
     ResponseEntity<Long> cadastrarLocalizacao(@PathVariable Long id, @RequestBody CadastrarLocalizacaoRequest request) throws BusinessRuleException;
 
+    @PutMapping("/centros/{id}/localizacoes/{idLocalizacao}")
+    @Operation(summary = "Atualizar localização", description = "Atualiza os dados de uma localização de um centro")
+    ResponseEntity<Void> atualizarLocalizacao(@PathVariable Long id, @PathVariable Long idLocalizacao, @RequestBody CadastrarLocalizacaoRequest request) throws BusinessRuleException;
+
     // ============================================
     // VÍNCULO PRODUTO ↔ LOCALIZAÇÃO
     // ============================================
@@ -59,6 +63,10 @@ public interface EstoqueController {
     @PostMapping("/produtos/localizacoes")
     @Operation(summary = "Vincular produto a localização", description = "Vincula um produto a uma localização")
     ResponseEntity<Void> vincularProdutoLocalizacao(@RequestBody VincularProdutoLocalizacaoRequest request) throws BusinessRuleException;
+
+    @PutMapping("/produtos/localizacoes")
+    @Operation(summary = "Atualizar vínculo produto-localização", description = "Atualiza o vínculo (ou cria, se não existir) de um produto a uma localização")
+    ResponseEntity<Void> atualizarVinculoProdutoLocalizacao(@RequestBody VincularProdutoLocalizacaoRequest request) throws BusinessRuleException;
 
     @GetMapping("/produtos/{id}/localizacoes")
     @Operation(summary = "Listar localizações do produto", description = "Lista todas as localizações onde o produto está armazenado")

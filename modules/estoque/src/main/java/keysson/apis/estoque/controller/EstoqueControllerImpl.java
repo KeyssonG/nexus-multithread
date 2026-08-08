@@ -78,6 +78,13 @@ public class EstoqueControllerImpl implements EstoqueController {
         return ResponseEntity.ok(idLocalizacao);
     }
 
+    @Override
+    public ResponseEntity<Void> atualizarLocalizacao(Long id, Long idLocalizacao, CadastrarLocalizacaoRequest request) throws BusinessRuleException {
+        log.info("Recebendo requisição para atualizar localização '{}' no centro ID: {}", request.codigo(), id);
+        estoqueService.atualizarLocalizacao(idLocalizacao, request);
+        return ResponseEntity.ok().build();
+    }
+
     // ============================================
     // VÍNCULO PRODUTO ↔ LOCALIZAÇÃO
     // ============================================
@@ -86,6 +93,13 @@ public class EstoqueControllerImpl implements EstoqueController {
     public ResponseEntity<Void> vincularProdutoLocalizacao(VincularProdutoLocalizacaoRequest request) throws BusinessRuleException {
         log.info("Recebendo requisição para vincular produto {} à localização {}", request.idProduto(), request.idLocalizacao());
         estoqueService.vincularProdutoLocalizacao(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> atualizarVinculoProdutoLocalizacao(VincularProdutoLocalizacaoRequest request) throws BusinessRuleException {
+        log.info("Recebendo requisição para atualizar vínculo do produto {} na localização {}", request.idProduto(), request.idLocalizacao());
+        estoqueService.atualizarVinculoProdutoLocalizacao(request);
         return ResponseEntity.ok().build();
     }
 

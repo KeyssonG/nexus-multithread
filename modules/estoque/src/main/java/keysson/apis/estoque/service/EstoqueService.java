@@ -134,6 +134,24 @@ public class EstoqueService {
         }
     }
 
+    @Transactional
+    public void atualizarLocalizacao(Long idLocalizacao, CadastrarLocalizacaoRequest request) throws BusinessRuleException {
+        log.info("Atualizando localização ID: {}", idLocalizacao);
+        Long idEmpresa = extrairIdEmpresa();
+        try {
+            LocalizacaoResponse localizacao = estoqueRepository.buscarLocalizacaoPorId(idEmpresa, idLocalizacao);
+            if (localizacao == null) {
+                throw new BusinessRuleException(ERROR_BUSCAR_LOCALIZACAO);
+            }
+            estoqueRepository.atualizarLocalizacao(idEmpresa, idLocalizacao, request);
+        } catch (BusinessRuleException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Erro ao atualizar localização ID {}: {}", idLocalizacao, e.getMessage());
+            throw new BusinessRuleException(ERROR_ATUALIZAR_LOCALIZACAO);
+        }
+    }
+
     // ============================================
     // VÍNCULO PRODUTO ↔ LOCALIZAÇÃO
     // ============================================
@@ -151,6 +169,17 @@ public class EstoqueService {
         } catch (Exception e) {
             log.error("Erro ao vincular produto à localização: {}", e.getMessage());
             throw new BusinessRuleException(ERROR_VINCULAR_PRODUTO_LOCALIZACAO);
+        }
+    }
+
+    @Transactional
+    public void atualizarVinculoProdutoLocalizacao(VincularProdutoLocalizacaoRequest request) throws BusinessRuleException {
+        log.info("Atualizando vínculo do produto {} na localização {}", request.idProduto(), request.idLocalizacao());
+        try {
+            estoqueRepository.atualizarVinculoProdutoLocalizacao(extrairIdEmpresa(), request);
+        } catch (Exception e) {
+            log.error("Erro ao atualizar vínculo produto-localização: {}", e.getMessage());
+            throw new BusinessRuleException(ERROR_ATUALIZAR_VINCULO_PRODUTO_LOCALIZACAO);
         }
     }
 

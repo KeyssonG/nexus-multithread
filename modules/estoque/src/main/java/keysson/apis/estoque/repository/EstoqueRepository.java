@@ -129,11 +129,28 @@ public class EstoqueRepository {
     // ============================================
 
     private static final String SQL_LISTAR_LOCALIZACOES_POR_CENTRO = """
-            SELECT id_localizacao, id_centro, codigo, descricao, corredor, prateleira,
-                   nivel, capacidade_max, status, criado_em
-            FROM tb_localizacao
-            WHERE id_centro = ? AND id_empresa = ?
-            ORDER BY codigo
+            SELECT l.id_localizacao, l.id_centro, l.codigo, l.descricao, l.corredor, l.prateleira,
+                   l.nivel, l.capacidade_max, l.status, l.criado_em,
+                   pl.id_produto_localizacao, pl.id_produto, pl.quantidade,
+                   p.nome AS produto_nome
+            FROM tb_localizacao l
+            LEFT JOIN tb_produto_localizacao pl
+                   ON pl.id_localizacao = l.id_localizacao AND pl.id_empresa = l.id_empresa
+            LEFT JOIN tb_produto p ON p.id_produto = pl.id_produto
+            WHERE l.id_centro = ? AND l.id_empresa = ?
+            ORDER BY l.codigo
+            """;
+
+    private static final String SQL_BUSCAR_LOCALIZACAO_POR_ID = """
+            SELECT l.id_localizacao, l.id_centro, l.codigo, l.descricao, l.corredor, l.prateleira,
+                   l.nivel, l.capacidade_max, l.status, l.criado_em,
+                   pl.id_produto_localizacao, pl.id_produto, pl.quantidade,
+                   p.nome AS produto_nome
+            FROM tb_localizacao l
+            LEFT JOIN tb_produto_localizacao pl
+                   ON pl.id_localizacao = l.id_localizacao AND pl.id_empresa = l.id_empresa
+            LEFT JOIN tb_produto p ON p.id_produto = pl.id_produto
+            WHERE l.id_localizacao = ? AND l.id_empresa = ?
             """;
 
     private static final String SQL_CADASTRAR_LOCALIZACAO = """
@@ -141,8 +158,34 @@ public class EstoqueRepository {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
+    private static final String SQL_ATUALIZAR_LOCALIZACAO = """
+            UPDATE tb_localizacao
+            SET codigo = ?, descricao = ?, corredor = ?, prateleira = ?, nivel = ?,
+                capacidade_max = ?, status = ?
+            WHERE id_localizacao = ? AND id_empresa = ?
+            """;
+
+    private static final String SQL_BUSCAR_VINCULO_POR_LOCALIZACAO = """
+            SELECT id_produto_localizacao
+            FROM tb_produto_localizacao
+            WHERE id_localizacao = ? AND id_empresa = ?
+            LIMIT 1
+            """;
+
+    private static final String SQL_ATUALIZAR_VINCULO = """
+            UPDATE tb_produto_localizacao
+            SET id_produto = ?, quantidade = ?
+            WHERE id_produto_localizacao = ? AND id_empresa = ?
+            """;
+
     public List<LocalizacaoResponse> listarLocalizacoesPorCentro(Long idEmpresa, Long idCentro) {
         return jdbcTemplate.query(SQL_LISTAR_LOCALIZACOES_POR_CENTRO, new Object[]{idCentro, idEmpresa}, localizacaoMapper);
+    }
+
+    public LocalizacaoResponse buscarLocalizacaoPorId(Long idEmpresa, Long id) {
+        List<LocalizacaoResponse> resultados = jdbcTemplate.query(
+                SQL_BUSCAR_LOCALIZACAO_POR_ID, new Object[]{id, idEmpresa}, localizacaoMapper);
+        return resultados.isEmpty() ? null : resultados.getFirst();
     }
 
     public Long cadastrarLocalizacao(Long idEmpresa, Long idCentro, CadastrarLocalizacaoRequest request) {
@@ -165,6 +208,28 @@ public class EstoqueRepository {
             return ps;
         }, keyHolder);
         return ((Number) keyHolder.getKeyList().getFirst().get("id_localizacao")).longValue();
+    }
+
+    public void atualizarLocalizacao(Long idEmpresa, Long idLocalizacao, CadastrarLocalizacaoRequest request) {
+        jdbcTemplate.update(SQL_ATUALIZAR_LOCALIZACAO,
+                request.codigo(), request.descricao(), request.corredor(), request.prateleira(),
+                request.nivel(), request.capacidadeMax(),
+                request.status() != null ? request.status() : "ATIVO",
+                idLocalizacao, idEmpresa);
+    }
+
+    public void atualizarVinculoProdutoLocalizacao(Long idEmpresa, VincularProdutoLocalizacaoRequest request) {
+        Long idVinculo = jdbcTemplate.query(SQL_BUSCAR_VINCULO_POR_LOCALIZACAO,
+                new Object[]{request.idLocalizacao(), idEmpresa},
+                rs -> rs.next() ? rs.getLong("id_produto_localizacao") : null);
+        if (idVinculo != null) {
+            jdbcTemplate.update(SQL_ATUALIZAR_VINCULO,
+                    request.idProduto(),
+                    request.quantidade() != null ? request.quantidade() : 0,
+                    idVinculo, idEmpresa);
+        } else {
+            vincularProdutoLocalizacao(idEmpresa, request);
+        }
     }
 
     // ============================================
