@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +34,7 @@ public class CompanyService {
     private static final String RABBITMQ_CB = "rabbitmqCB";
 
     private final CompanyRepository companyRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     private final RabbitService rabbitService;
 
     @Autowired
@@ -47,10 +47,10 @@ public class CompanyService {
     private JwtUtil jwtUtil;
 
 
-    public CompanyService(CompanyRepository companyRepository, RabbitService rabbitService, RabbitTemplate rabbitTemplate) {
+    public CompanyService(CompanyRepository companyRepository, RabbitService rabbitService, RabbitTemplate rabbitTemplate, PasswordEncoder passwordEncoder) {
         this.companyRepository = companyRepository;
         this.rabbitService = rabbitService;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
         this.rabbitTemplate = rabbitTemplate;
     }
 

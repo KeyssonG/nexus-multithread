@@ -53,6 +53,7 @@ project(':libs:common-core') {
         runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
+        implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
     }
 }
 
@@ -182,6 +183,7 @@ project(':modules:validacao-ad') {
         implementation 'org.springframework.boot:spring-boot-starter-amqp'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
         runtimeOnly 'org.postgresql:postgresql'
+        implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 
         // JWT
         implementation 'io.jsonwebtoken:jjwt-api:0.11.5'

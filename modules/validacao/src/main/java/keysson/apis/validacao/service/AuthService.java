@@ -10,6 +10,7 @@ import keysson.apis.validacao.exception.enums.ErrorCode;
 import keysson.apis.validacao.model.PasswordResetToken;
 import keysson.apis.validacao.model.User;
 import keysson.apis.validacao.repository.ValidacaoRepository;
+import keysson.nexus.security.PasswordHashUtil;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,7 +42,6 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
     public LoginResponse login(LoginRequest request) {
         User user = validacaoRepository.findByUsername(request.getUsername(), request.getIdEmpresa());
         int statuCompany = validacaoRepository.findStatusCompany(request.getIdEmpresa());
@@ -53,6 +53,10 @@ public class AuthService {
 
         if (!checkPassword) {
             throw new BusinessRuleException(ErrorCode.BAD_PASSWORD);
+        }
+
+        if (PasswordHashUtil.needsUpgrade(user.getPassword())) {
+            validacaoRepository.saveNewPassword(passwordEncoder.encode(request.getPassword()), user.getId());
         }
 
         int status = user.getStatus();

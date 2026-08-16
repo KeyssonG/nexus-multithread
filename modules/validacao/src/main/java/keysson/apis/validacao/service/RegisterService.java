@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +28,7 @@ import java.util.Random;
 public class RegisterService {
 
     private final RegisterRepository registerRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     private final RabbitService rabbitService;
 
     @Autowired
@@ -41,7 +41,7 @@ public class RegisterService {
     private JwtUtil jwtUtil;
 
     public RegisterService(RegisterRepository registerRepository, 
-                           BCryptPasswordEncoder passwordEncoder, 
+                           PasswordEncoder passwordEncoder, 
                            @Qualifier("validacaoRabbitService") RabbitService rabbitService) {
         this.registerRepository = registerRepository;
         this.passwordEncoder = passwordEncoder;

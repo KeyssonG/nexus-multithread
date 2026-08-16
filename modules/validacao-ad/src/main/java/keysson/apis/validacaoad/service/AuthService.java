@@ -12,6 +12,7 @@ import keysson.apis.validacaoad.exception.enums.ErrorCode;
 import keysson.apis.validacaoad.model.PasswordResetToken;
 import keysson.apis.validacaoad.model.User;
 import keysson.apis.validacaoad.repository.ValidacaoRepository;
+import keysson.nexus.security.PasswordHashUtil;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -67,6 +68,10 @@ public class AuthService {
         if (checkPassword == false) {
             log.warn("login_bad_password | username={}", request.getUsername());
             throw new BusinessRuleException(ErrorCode.BAD_PASSWORD);
+        }
+
+        if (PasswordHashUtil.needsUpgrade(user.getPassword())) {
+            validacaoRepository.saveNewPassword(passwordEncoder.encode(request.getPassword()), user.getId());
         }
 
         boolean isInitialAccess = user.isInitialAccess();
