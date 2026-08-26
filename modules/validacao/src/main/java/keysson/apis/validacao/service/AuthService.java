@@ -60,7 +60,7 @@ public class AuthService {
             );
             if (kcToken != null) {
                 log.info("keycloak_login_success | username={}", request.getUsername());
-                return new LoginResponse(kcToken.getAccessToken(), kcToken.getExpiresAt());
+                return new LoginResponse(kcToken.getAccessToken(), new java.util.Date(kcToken.getExpiresAt()));
             }
         } catch (Exception e) {
             log.debug("keycloak_login_fallback | username={} reason={}", request.getUsername(), e.getMessage());
@@ -117,7 +117,7 @@ public class AuthService {
                 );
                 if (kcToken != null) {
                     log.info("keycloak_login_after_migration | username={}", request.getUsername());
-                    return new LoginResponse(kcToken.getAccessToken(), kcToken.getExpiresAt());
+                    return new LoginResponse(kcToken.getAccessToken(), new java.util.Date(kcToken.getExpiresAt()));
                 }
             }
         } catch (Exception e) {
