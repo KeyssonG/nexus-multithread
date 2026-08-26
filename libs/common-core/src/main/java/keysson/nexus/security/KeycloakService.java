@@ -54,7 +54,7 @@ public class KeycloakService {
 
     public KeycloakToken attemptLogin(String username, String password, String clientId) {
         try {
-            String url = serverUrl + "/realms/" + realm + "/protocol/openid-connect/token";
+        String url = serverUrl + "/realms/master/protocol/openid-connect/token";
 
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("grant_type", "password");
