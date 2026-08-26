@@ -196,7 +196,11 @@ public class KeycloakService {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
-        Map<String, Object> json = objectMapper.readValue(response.getBody(), Map.class);
-        return (String) json.get("access_token");
+        try {
+            Map<String, Object> json = objectMapper.readValue(response.getBody(), Map.class);
+            return (String) json.get("access_token");
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse admin token response", e);
+        }
     }
 }
