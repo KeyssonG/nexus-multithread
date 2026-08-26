@@ -33,6 +33,10 @@ public class SecurityConfig {
     @Qualifier("commonCoreJwtAuthenticationFilter")
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Autowired
+    @Qualifier("dualAuthTokenFilter")
+    private DualAuthTokenFilter dualAuthTokenFilter;
+
     @Bean("commonCorePasswordEncoder")
     @Primary
     public PasswordEncoder passwordEncoder() {
@@ -62,6 +66,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .addFilterBefore(dualAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

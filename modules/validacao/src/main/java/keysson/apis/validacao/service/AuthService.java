@@ -2,6 +2,7 @@ package keysson.apis.validacao.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import keysson.nexus.security.JwtUtil;
+import keysson.nexus.security.KeycloakService;
 import keysson.apis.validacao.dto.PasswordResetEvent;
 import keysson.apis.validacao.dto.request.LoginRequest;
 import keysson.apis.validacao.dto.response.LoginResponse;
@@ -11,6 +12,8 @@ import keysson.apis.validacao.model.PasswordResetToken;
 import keysson.apis.validacao.model.User;
 import keysson.apis.validacao.repository.ValidacaoRepository;
 import keysson.nexus.security.PasswordHashUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +26,8 @@ import java.util.List;
 @Service("validacaoAuthService")
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -30,6 +35,9 @@ public class AuthService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private KeycloakService keycloakService;
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
@@ -43,6 +51,22 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
+        // ──── PASSO 1: Tentar Keycloak ────
+        try {
+            KeycloakService.KeycloakToken kcToken = keycloakService.attemptLogin(
+                    request.getUsername(),
+                    request.getPassword(),
+                    "multithread-gestao"
+            );
+            if (kcToken != null) {
+                log.info("keycloak_login_success | username={}", request.getUsername());
+                return new LoginResponse(kcToken.getAccessToken(), kcToken.getExpiresAt());
+            }
+        } catch (Exception e) {
+            log.debug("keycloak_login_fallback | username={} reason={}", request.getUsername(), e.getMessage());
+        }
+
+        // ──── PASSO 2: Login PostgreSQL (fluxo atual) ────
         User user = validacaoRepository.findByUsername(request.getUsername(), request.getIdEmpresa());
         int statuCompany = validacaoRepository.findStatusCompany(request.getIdEmpresa());
         if (user == null) {
@@ -71,6 +95,36 @@ public class AuthService {
 
         List<String> modules = validacaoRepository.findUserModules(user.getId(), request.getIdEmpresa());
 
+        // ──── PASSO 3: Migrar para Keycloak ────
+        try {
+            String kcUserId = keycloakService.createUser(
+                    user.getUsername(),
+                    request.getPassword(),
+                    user.getCompanyId(),
+                    user.getConsumerId(),
+                    "client"
+            );
+
+            if (kcUserId != null) {
+                keycloakService.assignRoles(kcUserId, modules);
+                log.info("keycloak_migrated | userId={} username={}", user.getId(), user.getUsername());
+
+                // ──── PASSO 4: Retentar Keycloak login ────
+                KeycloakService.KeycloakToken kcToken = keycloakService.attemptLogin(
+                        request.getUsername(),
+                        request.getPassword(),
+                        "multithread-gestao"
+                );
+                if (kcToken != null) {
+                    log.info("keycloak_login_after_migration | username={}", request.getUsername());
+                    return new LoginResponse(kcToken.getAccessToken(), kcToken.getExpiresAt());
+                }
+            }
+        } catch (Exception e) {
+            log.error("keycloak_migration_failed | username={} error={}", request.getUsername(), e.getMessage());
+        }
+
+        // ──── PASSO 5: Fallback seguro — token legado ────
         String token = jwtUtil.generateToken(
                 user.getId(),
                 user.getCompanyId(),
@@ -82,41 +136,30 @@ public class AuthService {
 
     @Transactional
     public void validatePasswordReset(String token, String newPassword) {
-        // Busca o token válido
         PasswordResetToken resetToken = validacaoRepository.findValidResetToken(token);
         if (resetToken == null) {
             throw new BusinessRuleException(ErrorCode.TOKEN_INVALIDO);
         }
 
-        // Criptografa a nova senha
         String newEncryptedPassword = passwordEncoder.encode(newPassword);
-
-        // Atualiza a senha do usuário
         validacaoRepository.saveNewPassword(newEncryptedPassword, resetToken.getUserId().intValue());
-
-        // Marca o token como usado
         validacaoRepository.markTokenAsUsed(token);
     }
 
     @Transactional
     public void requestPasswordChange(String email) {
-        // Busca o usuário pelo username e email na tabela contatos
         User user = validacaoRepository.findByUsernameAndEmail(email);
         if (user == null) {
             throw new BusinessRuleException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // Gera um token único
         int tokenInt = 100000 + (int) (Math.random() * 900000);
         String token = String.valueOf(tokenInt);
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(3);
 
-        // Salva o token no banco
         validacaoRepository.saveResetToken((long) user.getId(), token, expiresAt);
 
-        // Cria o evento para enviar para a fila
         PasswordResetEvent event = new PasswordResetEvent(email, token, user.getUsername());
-
         rabbitTemplate.convertAndSend("password.reset.queue", event);
     }
 }
