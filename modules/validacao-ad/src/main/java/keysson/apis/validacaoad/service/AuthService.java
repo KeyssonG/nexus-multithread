@@ -98,17 +98,27 @@ public class AuthService {
 
         // ──── PASSO 3: Migrar para Keycloak ────
         try {
-            String kcUserId = keycloakService.createUser(
-                    user.getUsername(),
-                    request.getPassword(),
-                    user.getCompanyId(),
-                    user.getConsumerId(),
-                    "admin"
-            );
+            String kcUserId;
+
+            if (keycloakService.userExists(request.getUsername())) {
+                kcUserId = keycloakService.findUserId(request.getUsername());
+                log.info("keycloak_ad_usuario_ja_existe | usuario={}", request.getUsername());
+            } else {
+                kcUserId = keycloakService.createUser(
+                        user.getUsername(),
+                        request.getPassword(),
+                        user.getCompanyId(),
+                        user.getConsumerId(),
+                        "admin"
+                );
+            }
 
             if (kcUserId != null) {
-                keycloakService.assignRoles(kcUserId, List.of("admin-staff"));
-                log.info("keycloak_ad_migrated | userId={} username={}", user.getId(), user.getUsername());
+                if (!keycloakService.userHasRealmRoles(kcUserId)) {
+                    keycloakService.assignRoles(kcUserId, List.of("admin-staff"));
+                    log.info("keycloak_ad_roles_atribuidas | userId={} usuario={}", user.getId(), user.getUsername());
+                }
+                log.info("keycloak_ad_migrado | userId={} usuario={}", user.getId(), user.getUsername());
 
                 // ──── PASSO 4: Retentar Keycloak login ────
                 KeycloakService.KeycloakToken kcToken = keycloakService.attemptLogin(
@@ -153,6 +163,11 @@ public class AuthService {
 
         String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
         validacaoRepository.saveNewPassword(newPasswordHash, userId);
+
+        String username = validacaoRepository.findUsernameById(userId);
+        if (username != null) {
+            keycloakService.updatePasswordByUsername(username, request.getNewPassword());
+        }
     }
 
     @Transactional
@@ -184,5 +199,10 @@ public class AuthService {
         String newEncryptedPassword = passwordEncoder.encode(newPassword);
         validacaoRepository.saveNewPassword(newEncryptedPassword, resetToken.getUserId().intValue());
         validacaoRepository.markTokenAsUsed(token);
+
+        String username = validacaoRepository.findUsernameById(resetToken.getUserId().intValue());
+        if (username != null) {
+            keycloakService.updatePasswordByUsername(username, newPassword);
+        }
     }
 }

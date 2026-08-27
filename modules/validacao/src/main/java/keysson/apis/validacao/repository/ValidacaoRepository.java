@@ -83,6 +83,14 @@ public class ValidacaoRepository {
             UPDATE password_reset_tokens SET used = true WHERE token = ?
             """;
 
+    private static final String FIND_USERNAME_BY_ID = """
+            SELECT username FROM users WHERE id = ?
+            """;
+
+    private static final String FIND_CONTACT_BY_USER_ID = """
+            SELECT email, telefone FROM contatos WHERE user_id = ? LIMIT 1
+            """;
+
     private static final String FIND_USER_MODULES = """
             SELECT ms.nome 
             FROM permissoes_modulo pm
@@ -151,5 +159,22 @@ public class ValidacaoRepository {
 
     public List<String> findUserModules(int userId, int idEmpresa) {
         return jdbcTemplate.queryForList(FIND_USER_MODULES, String.class, idEmpresa, userId);
+    }
+
+    public String findUsernameById(int userId) {
+        try {
+            return jdbcTemplate.queryForObject(FIND_USERNAME_BY_ID, String.class, userId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String findEmailByUserId(int userId) {
+        try {
+            return jdbcTemplate.queryForObject(FIND_CONTACT_BY_USER_ID,
+                    (rs, rowNum) -> rs.getString("email"), userId);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

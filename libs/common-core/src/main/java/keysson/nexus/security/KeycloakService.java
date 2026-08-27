@@ -54,7 +54,7 @@ public class KeycloakService {
 
     public KeycloakToken attemptLogin(String username, String password, String clientId) {
         try {
-        String url = serverUrl + "/realms/master/protocol/openid-connect/token";
+            String url = serverUrl + "/realms/" + realm + "/protocol/openid-connect/token";
 
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("grant_type", "password");
@@ -75,9 +75,13 @@ public class KeycloakService {
                 String refreshToken = (String) json.get("refresh_token");
                 int expiresIn = (int) json.get("expires_in");
                 return new KeycloakToken(accessToken, refreshToken, expiresIn);
+            } else {
+                log.debug("keycloak_login_resposta_invalida | usuario={} status={}", username, response.getStatusCode());
             }
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.debug("keycloak_login_rejeitado | usuario={} status={}", username, e.getStatusCode());
         } catch (Exception e) {
-            log.debug("keycloak_login_failed | username={} error={}", username, e.getMessage());
+            log.debug("keycloak_falha_login | usuario={} erro={}", username, e.getMessage());
         }
         return null;
     }
@@ -98,7 +102,51 @@ public class KeycloakService {
                 return !users.isEmpty();
             }
         } catch (Exception e) {
-            log.warn("keycloak_user_exists_check_failed | username={} error={}", username, e.getMessage());
+            log.warn("keycloak_falha_verificar_usuario | usuario={} erro={}", username, e.getMessage());
+        }
+        return false;
+    }
+
+    public String findUserId(String username) {
+        try {
+            String adminToken = getAdminToken();
+            String url = serverUrl + "/admin/realms/" + realm + "/users?username=" + username + "&exact=true";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(adminToken);
+
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                List<Map<String, Object>> users = objectMapper.readValue(response.getBody(), List.class);
+                if (!users.isEmpty()) {
+                    return (String) users.get(0).get("id");
+                }
+            }
+        } catch (Exception e) {
+            log.warn("keycloak_falha_buscar_usuario | usuario={} erro={}", username, e.getMessage());
+        }
+        return null;
+    }
+
+    public boolean userHasRealmRoles(String userId) {
+        try {
+            String adminToken = getAdminToken();
+            String url = serverUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(adminToken);
+
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                List<?> roles = objectMapper.readValue(response.getBody(), List.class);
+                return !roles.isEmpty();
+            }
+        } catch (Exception e) {
+            log.debug("keycloak_falha_verificar_roles | userId={} erro={}", userId, e.getMessage());
         }
         return false;
     }
@@ -121,7 +169,6 @@ public class KeycloakService {
                 userPayload.put("email", email);
             } else {
                 userPayload.put("email", username + "@placeholder.local");
-                userPayload.put("emailVerified", true);
             }
 
             Map<String, List<String>> attributes = new LinkedHashMap<>();
@@ -146,11 +193,14 @@ public class KeycloakService {
             if (response.getStatusCode() == HttpStatus.CREATED) {
                 String location = response.getHeaders().getLocation().toString();
                 String userId = location.substring(location.lastIndexOf('/') + 1);
-                log.info("keycloak_user_created | userId={} username={}", userId, username);
+                log.info("keycloak_usuario_criado | userId={} usuario={}", userId, username);
                 return userId;
             }
+        } catch (org.springframework.web.client.HttpClientErrorException.Conflict e) {
+            log.info("keycloak_usuario_ja_existe | usuario={}", username);
+            return findUserId(username);
         } catch (Exception e) {
-            log.error("keycloak_create_user_failed | username={} error={}", username, e.getMessage());
+            log.error("keycloak_falha_criar_usuario | usuario={} erro={}", username, e.getMessage());
         }
         return null;
     }
@@ -176,10 +226,47 @@ public class KeycloakService {
             HttpEntity<List<Map<String, Object>>> request = new HttpEntity<>(rolesPayload, headers);
             restTemplate.postForEntity(url, request, Void.class);
 
-            log.info("keycloak_roles_assigned | userId={} roles={}", userId, roleNames);
+            log.info("keycloak_roles_atribuidas | userId={} roles={}", userId, roleNames);
         } catch (Exception e) {
-            log.error("keycloak_assign_roles_failed | userId={} error={}", userId, e.getMessage());
+            log.error("keycloak_falha_atribuir_roles | userId={} erro={}", userId, e.getMessage());
         }
+    }
+
+    public boolean updatePassword(String userId, String newPassword) {
+        try {
+            String adminToken = getAdminToken();
+            String url = serverUrl + "/admin/realms/" + realm + "/users/" + userId;
+
+            Map<String, Object> credential = new LinkedHashMap<>();
+            credential.put("type", "password");
+            credential.put("value", newPassword);
+            credential.put("temporary", false);
+
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("credentials", List.of(credential));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(adminToken);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+            restTemplate.exchange(url, HttpMethod.PUT, request, Void.class);
+
+            log.info("keycloak_senha_atualizada | userId={}", userId);
+            return true;
+        } catch (Exception e) {
+            log.error("keycloak_falha_atualizar_senha | userId={} erro={}", userId, e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean updatePasswordByUsername(String username, String newPassword) {
+        String userId = findUserId(username);
+        if (userId == null) {
+            log.debug("keycloak_usuario_nao_encontrado_para_reset | usuario={}", username);
+            return false;
+        }
+        return updatePassword(userId, newPassword);
     }
 
     private String getAdminToken() {
@@ -194,13 +281,33 @@ public class KeycloakService {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
-        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
         try {
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                log.error("keycloak_falha_token_admin | status={}", response.getStatusCode());
+                throw new RuntimeException("Falha ao obter token admin: HTTP " + response.getStatusCode());
+            }
+
             Map<String, Object> json = objectMapper.readValue(response.getBody(), Map.class);
-            return (String) json.get("access_token");
+            String accessToken = (String) json.get("access_token");
+            if (accessToken == null) {
+                log.error("keycloak_token_admin_vazio | resposta={}", response.getBody());
+                throw new RuntimeException("Token admin vazio na resposta do Keycloak");
+            }
+            return accessToken;
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.error("keycloak_falha_token_admin | status={} body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("Falha ao obter token admin: " + e.getStatusCode(), e);
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            throw new RuntimeException("Failed to parse admin token response", e);
+            log.error("keycloak_falha_parse_token_admin | erro={}", e.getMessage());
+            throw new RuntimeException("Falha ao processar resposta do token admin", e);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("keycloak_falha_conexao_token_admin | erro={}", e.getMessage());
+            throw new RuntimeException("Falha de conexao ao obter token admin", e);
         }
     }
 }

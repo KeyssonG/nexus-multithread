@@ -6,7 +6,10 @@ import keysson.apis.validacaoad.dto.response.FuncionarioRegistroResultado;
 import keysson.apis.validacaoad.exception.BusinessRuleException;
 import keysson.apis.validacaoad.exception.enums.ErrorCode;
 import keysson.apis.validacaoad.repository.RegisterRepository;
+import keysson.nexus.security.KeycloakService;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,9 +20,12 @@ import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.Base64;
 import java.util.Random;
+import java.util.UUID;
 
 @Service("validacaoADRegisterService")
 public class RegisterService {
+
+    private static final Logger log = LoggerFactory.getLogger(RegisterService.class);
 
     private final RegisterRepository registerRepository;
     private final PasswordEncoder passwordEncoder;
@@ -27,6 +33,9 @@ public class RegisterService {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private KeycloakService keycloakService;
 
 
     public RegisterService(@Qualifier("validacaoADRegisterRepository") RegisterRepository registerRepository, 
@@ -77,6 +86,20 @@ public class RegisterService {
         }
 
         if (resultado.getResultCode() == 0) {
+            try {
+                keycloakService.createUser(
+                        requestRegister.getUsername(),
+                        plainPassword,
+                        0,
+                        UUID.randomUUID(),
+                        "admin",
+                        requestRegister.getEmail()
+                );
+                log.info("keycloak_usuario_criado_no_registro_ad | usuario={}", requestRegister.getUsername());
+            } catch (Exception e) {
+                log.error("keycloak_falha_criar_usuario_no_registro_ad | usuario={} erro={}", requestRegister.getUsername(), e.getMessage());
+            }
+
             FuncionarioCadastradoEvent event = new FuncionarioCadastradoEvent(
                     resultado.getIdFuncionario(),
                     requestRegister.getNome(),

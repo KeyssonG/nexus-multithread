@@ -9,6 +9,7 @@ import keysson.apis.validacao.dto.response.FuncionarioRegistroResultado;
 import keysson.apis.validacao.exception.BusinessRuleException;
 import keysson.apis.validacao.exception.enums.ErrorCode;
 import keysson.apis.validacao.repository.RegisterRepository;
+import keysson.nexus.security.KeycloakService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
 
 @Service("validacaoRegisterService")
@@ -39,6 +41,9 @@ public class RegisterService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private KeycloakService keycloakService;
 
     public RegisterService(RegisterRepository registerRepository, 
                            PasswordEncoder passwordEncoder, 
@@ -94,6 +99,20 @@ public class RegisterService {
         );
 
         if (resultado.getResultCode() == 0) {
+            try {
+                keycloakService.createUser(
+                        requestRegister.getUsername(),
+                        plainPassword,
+                        idEmpresa,
+                        UUID.randomUUID(),
+                        "client",
+                        requestRegister.getEmail()
+                );
+                log.info("keycloak_usuario_criado_no_registro | usuario={}", requestRegister.getUsername());
+            } catch (Exception e) {
+                log.error("keycloak_falha_criar_usuario_no_registro | usuario={} erro={}", requestRegister.getUsername(), e.getMessage());
+            }
+
             FuncionarioCadastradoEvent event = new FuncionarioCadastradoEvent(
                     idEmpresa,
                     requestRegister.getNome(),

@@ -174,11 +174,36 @@ public class ValidacaoRepository {
                 });
     }
 
+    private static final String FIND_USERNAME_BY_ID = """
+            SELECT username FROM users WHERE id = ?
+            """;
+
+    private static final String FIND_CONTACT_BY_USER_ID = """
+            SELECT email, telefone FROM contatos WHERE user_id = ? LIMIT 1
+            """;
+
     public void markTokenAsUsed(String token) throws SQLException {
         try {
             jdbcTemplate.update(MARK_TOKEN_AS_USED, token);
         } catch (Exception ex) {
             throw new SQLException("Erro ao marcar token como usado: " + ex.getMessage(), ex);
+        }
+    }
+
+    public String findUsernameById(Integer userId) {
+        try {
+            return jdbcTemplate.queryForObject(FIND_USERNAME_BY_ID, String.class, userId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String findEmailByUserId(Integer userId) {
+        try {
+            return jdbcTemplate.queryForObject(FIND_CONTACT_BY_USER_ID,
+                    (rs, rowNum) -> rs.getString("email"), userId);
+        } catch (Exception e) {
+            return null;
         }
     }
 }
